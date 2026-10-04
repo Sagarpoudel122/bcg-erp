@@ -1,0 +1,13 @@
+/* Tally-style titled panel used by every screen */
+/* Tally-style panel: title strip, white body */
+.tp{max-width:900px;background:var(--surface);border:1px solid var(--line-strong);border-radius:4px;overflow:hidden}
+.tp-bar{display:flex;gap:16px;align-items:baseline;justify-content:space-between;background:var(--bar);color:var(--bar-ink);padding:7px 16px;font-size:14px}
+.tp-bar b{font-weight:600;letter-spacing:.01em}
+.tp-bar span{opacity:.85;font-size:13px}
+.tp-body{padding:16px 20px 22px}
+.tp-info{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.tp-info .vt{background:var(--gold);color:var(--gold-ink);font-weight:600;padding:2px 12px;border-radius:2px}
+.tp-info .no{font-family:var(--f-num);color:var(--muted);font-size:14px}
+.tp-info .date{margin-left:auto;display:flex;gap:10px;align-items:baseline}
+.tp-info .date .in{width:150px;text-align:right}
+.tp-note{margin:0;padding:6px 0 0;color:var(--muted);font-size:14px}

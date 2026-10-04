@@ -1,0 +1,25 @@
+/* Design tokens (light + dark), reset, small utilities */
+/* A normal website shell (top bar + sidebar). Each screen inside it works like Tally Prime: a titled panel, Enter moves field to field,
+   type-to-search lists, key rail on the right. Minimal on purpose: messages only when something needs saying. */
+:root{
+  --bg:#F5F7F5; --surface:#FFFFFF; --sunk:#EEF2EF; --ink:#16221E; --muted:#5F6D66; --line:#DCE3DE; --line-strong:#B4C0B8;
+  --accent:#0D6352; --accent-ink:#FFFFFF; --accent-soft:#DCEFE8;
+  --bar:#0B5E57; --bar-ink:#FFFFFF; --gold:#FFD966; --gold-ink:#1B1B1B; --cream:#FFF7DB;
+  --ok:#1D7445; --warn:#8F5B00; --bad:#B42318; --dr:#1E4F8A; --cr:#8A3C14;
+  --f-ui:'IBM Plex Sans','Noto Sans Devanagari',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-num:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101614; --surface:#18201D; --sunk:#1D2723; --ink:#E2EAE6; --muted:#97A69F; --line:#2B3833; --line-strong:#40514A;
+  --accent:#4DBFA3; --accent-ink:#06231C; --accent-soft:#16352D;
+  --bar:#12433E; --bar-ink:#E2EAE6; --gold:#6B5416; --gold-ink:#FFF1BF; --cream:#2B2713;
+  --ok:#5CC48A; --warn:#E3AA4E; --bad:#F27466; --dr:#8DB8F0; --cr:#F0A57A; color-scheme:dark;}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;color:var(--muted);background:var(--sunk);white-space:nowrap}
+.muted{color:var(--muted)}
+.num,.amt{font-family:var(--f-num);font-variant-numeric:tabular-nums}

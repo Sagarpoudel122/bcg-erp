@@ -1,0 +1,25 @@
+/* Voucher entry lines, totals, narration */
+/* Voucher */
+.lines{display:flex;flex-direction:column;gap:2px;min-height:150px}
+.lh{display:grid;grid-template-columns:48px minmax(0,1fr) 170px;gap:0 14px;font-size:13px;color:var(--muted);padding:0 0 4px;border-bottom:1px solid var(--line-strong);margin-bottom:4px}
+.lh .r{text-align:right;padding-right:8px}
+.line{display:grid;grid-template-columns:48px minmax(0,1fr) 170px;gap:0 14px;align-items:start}
+.acct{display:grid;grid-template-columns:90px minmax(0,1fr) 170px;gap:0 14px;align-items:center;margin-bottom:14px}
+.acct .lbl::after{content:' :'}
+.acct .acctamt{text-align:right;padding-right:8px;color:var(--muted)}
+.acct .sub{grid-column:2 / -1;font-size:12.5px;font-style:italic;color:var(--muted);padding:0 8px 2px}
+.lines.single .lh,.line.single{grid-template-columns:minmax(0,1fr) 170px}
+.lines.single .lh span:first-child{display:none}
+.lines.single{min-height:110px}
+.line.single .sub{grid-column:1 / -1}
+.line .side{text-align:center;font-family:var(--f-num);font-weight:500}
+.in.side,.in.lid,.line .in.amt,#lf-side{height:31px;padding-top:0;padding-bottom:0}
+.line[data-side="Dr"] .side{color:var(--dr)}.line[data-side="Cr"] .side{color:var(--cr)}
+.line[data-side="Cr"] .lid{padding-left:28px}
+.line .sub{grid-column:2 / -1;font-size:12.5px;font-style:italic;color:var(--muted);padding:0 8px 4px}
+.line[data-side="Cr"] .sub{padding-left:36px}
+.totals{display:flex;gap:24px;justify-content:flex-end;align-items:baseline;border-top:1px solid var(--ink);border-bottom:3px double var(--ink);margin-top:8px;padding:6px 8px;font-size:14px}
+.totals .dr{color:var(--dr)}.totals .cr{color:var(--cr)}
+.totals .okc{color:var(--ok);font-weight:600}.totals .badc{color:var(--bad)}
+.narr{margin-top:20px;display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;align-items:baseline}
+.narr .lbl::after,.f label::after{content:' :'}

@@ -1,0 +1,14 @@
+/* Input fields and label/field rows */
+.lbl{font-size:13px;color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.hint{font-size:12.5px}.hint .bad{color:var(--bad)}.hint .warn{color:var(--warn)}
+
+.in{display:block;width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:5px 8px;font-size:15px;min-width:0}
+.in:focus{outline:none;background:var(--cream);border-bottom-color:var(--accent)}
+.in::placeholder{color:var(--muted);opacity:.65}
+.in[readonly]{cursor:default}
+.in.amt{text-align:right}
+
+/* Forms */
+.f{display:grid;grid-template-columns:200px minmax(0,380px);gap:12px;align-items:baseline;padding:2px 0}
+.f label{font-size:14px;color:var(--muted)}

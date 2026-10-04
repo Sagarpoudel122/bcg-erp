@@ -1,0 +1,22 @@
+/* Print preview sheet */
+/* Print preview */
+.modal{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
+.modal .back{position:fixed;inset:0;background:rgba(10,20,16,.55)}
+.sheet{position:relative;width:min(720px,100%);display:flex;flex-direction:column;gap:10px}
+.sheet-bar{display:flex;gap:10px;align-items:center;background:var(--surface);border-radius:8px;padding:8px 12px}
+.sheet-bar .ghost{margin-left:auto;background:none;border:1px solid var(--line-strong);border-radius:6px;padding:6px 12px}
+.paper{background:#fff;color:#1B1B1B;padding:36px 40px;border-radius:4px;font-size:13px;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.25);--ink:#1B1B1B;--muted:#555;--line:#BDBDBD}
+.paper .ph{text-align:center;border-bottom:1px solid #BDBDBD;padding-bottom:10px}
+.paper .ph b{font-size:17px;display:block}
+.paper h3{text-align:center;letter-spacing:.14em;font-size:13px;margin:14px 0}
+.paper .pm{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-family:var(--f-num);font-size:12px}
+.paper table{font-size:12.5px}.paper th{color:#1B1B1B;border-bottom:1px solid #1B1B1B}.paper td{border-bottom:1px solid #BDBDBD}
+.paper .sub{font-size:11px;color:#555}
+.paper .tot td{border-top:1px solid #1B1B1B;border-bottom:2px solid #1B1B1B;font-weight:600}
+.paper .words{margin:12px 0 0;font-style:italic}
+.paper .sig{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px;text-align:center;font-size:12px}
+.paper .sig div{border-top:1px solid #1B1B1B;padding-top:4px}
+.paper .pf{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:28px;font-size:10.5px;color:#555;border-top:1px solid #BDBDBD;padding-top:6px}
+.paper .stamp{position:absolute;top:170px;right:40px;transform:rotate(-12deg);border:3px solid #B42318;color:#B42318;font-weight:700;letter-spacing:.15em;padding:4px 12px;font-size:18px;opacity:.85}
+.paper .off{margin-top:14px;padding:8px;border:1px dashed #BDBDBD;color:#666;font-size:11.5px;text-align:center}
+@media (max-width:820px){.paper{padding:22px 18px}.paper .sig{grid-template-columns:repeat(2,1fr)}}

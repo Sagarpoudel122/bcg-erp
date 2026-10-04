@@ -1,0 +1,21 @@
+/* HRM screens: small tables, payslip, balances */
+.hr-sub{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;margin:0 0 10px;font-size:14px}
+.hr-sub b{font-weight:600}
+.hr-bal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.hr-bal div{border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+.hr-bal b{display:block;font-size:20px;font-family:var(--f-num)}
+.hr-bal small{color:var(--muted)}
+td.c,th.c{text-align:center}
+tr.off td{color:var(--muted)}
+.slip{max-width:640px}
+.slip .who{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;margin-bottom:10px;font-size:14px}
+.slip .who span{color:var(--muted)}
+.slip .net td{font-weight:600;border-top:1px solid var(--ink);border-bottom:3px double var(--ink)}
+.slip h4{margin:14px 0 2px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.slip .words{margin:12px 0 0;font-style:italic;color:var(--muted);font-size:13px}
+.tool-row{display:flex;gap:12px;align-items:baseline;padding:8px 10px;border-bottom:1px solid var(--line)}
+@media (max-width:820px){.hr-bal{grid-template-columns:minmax(0,1fr)}}
+.ld-h{margin:16px 0 4px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:2px}
+.ld-warn{border:1px solid var(--warn);border-radius:6px;padding:6px 12px;margin-bottom:6px;color:var(--warn);background:var(--cream)}
+.ld-warn p{margin:2px 0;font-size:14px}
+.badt{color:var(--bad)}

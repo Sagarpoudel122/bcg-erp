@@ -1,0 +1,45 @@
+/* Type-to-search list, detail popups, warning / question popup, success toast */
+/* Type-to-search list: a small titled box like Tally's "List of Ledgers" */
+.pick{position:fixed;z-index:30;background:var(--surface);border:1px solid var(--line-strong);border-radius:3px;box-shadow:0 8px 28px rgba(0,0,0,.2);overflow:auto}
+.pick .pt{background:var(--bar);color:var(--bar-ink);font-size:12.5px;padding:4px 10px;position:sticky;top:0}
+.pick .it{display:flex;gap:16px;justify-content:space-between;align-items:baseline;padding:5px 10px;cursor:pointer;font-size:14.5px}
+.pick .it small{font-size:12px;color:var(--muted)}
+.pick .it.sel{background:var(--gold);color:var(--gold-ink)}
+.pick .it.sel small{color:inherit;opacity:.8}
+.pick .none{padding:8px 10px;color:var(--muted);font-size:14px}
+
+/* Popups: bill details, cheque details */
+.panel{position:fixed;inset:0;z-index:25;background:rgba(10,20,16,.32);display:flex;align-items:center;justify-content:center;padding:16px}
+.pcard{background:var(--surface);border:1px solid var(--line-strong);border-radius:4px;width:min(680px,100%);max-height:calc(100vh - 100px);overflow:auto;box-shadow:0 14px 44px rgba(0,0,0,.25)}
+.pcard h2{margin:0;font-size:14px;font-weight:600;background:var(--bar);color:var(--bar-ink);padding:7px 16px}
+.pcard .pb{padding:14px 18px 16px}
+.phead{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-bottom:12px}
+.phead b{color:var(--ink);font-weight:500}
+.prow{display:grid;gap:12px;align-items:baseline;padding:2px 0}
+.prow.a{grid-template-columns:130px minmax(0,1fr) 120px}
+.prow.i{grid-template-columns:130px 1fr 1fr}
+.prow.b{grid-template-columns:minmax(0,1fr) 150px 130px}
+.prow .due{grid-column:1 / -1;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:baseline;padding-left:8px}
+.prow .due .in{width:54px;text-align:right;padding:2px 6px}
+.prow .dash{font-size:13px;color:var(--muted);padding:0 8px}
+.pfoot{margin-top:12px;font-size:12.5px;color:var(--muted)}
+.okt{color:var(--ok)}.badt{color:var(--bad)}
+
+/* Success toast (top right) and warning popup. Info hints stay in the status bar at the bottom. */
+#toasts{position:fixed;top:56px;right:20px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.toast{pointer-events:auto;display:flex;gap:8px;align-items:center;max-width:min(380px,calc(100vw - 32px));padding:8px 14px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-left:3px solid var(--ok);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.16);font-size:14px;opacity:0;transform:translateY(-6px);transition:opacity .18s,transform .18s}
+.toast.in{opacity:1;transform:none}
+.toast .tick{color:var(--ok);font-weight:700}
+.alert{position:fixed;inset:0;z-index:50;background:rgba(10,20,16,.38);display:flex;align-items:center;justify-content:center;padding:16px}
+.acard{width:min(440px,100%);background:var(--surface);border:1px solid var(--line-strong);border-top:4px solid var(--bad);border-radius:4px;box-shadow:0 14px 44px rgba(0,0,0,.28);padding:16px 20px 14px}
+.acard.warn{border-top-color:var(--warn)}
+.acard .ah{display:flex;gap:10px;align-items:center;font-size:15px}
+.acard .ico{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--bad);color:var(--surface);font-weight:700;font-size:13px;flex:none}
+.acard.warn .ico{background:var(--warn)}
+.acard p{margin:10px 0 14px 32px;font-size:14.5px}
+.acard.ask{border-top-color:var(--accent)}
+.acard.ask .ico{background:var(--accent);color:var(--accent-ink)}
+.acard .af{display:flex;justify-content:flex-end;gap:10px}
+.acard .abtn{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:4px;padding:6px 22px;display:inline-flex;gap:8px;align-items:center}
+.acard .abtn.ghost{background:none;color:var(--ink);border-color:var(--line-strong)}
+.acard .abtn kbd{background:none;border-color:currentColor;color:inherit;opacity:.8}

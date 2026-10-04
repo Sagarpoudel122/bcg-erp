@@ -1,0 +1,38 @@
+/* Dashboard: figure tiles, money in/out chart, lists, quick links */
+:root{--flow-in:#2a78d6;--flow-out:#e34948}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--flow-in:#3987e5;--flow-out:#e66767}}
+/* the in/out pair is validated with the dataviz palette validator against this app's surfaces (#FFFFFF, #18201D) */
+.dtiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.dt{border:1px solid var(--line);border-radius:6px;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer;min-width:0}
+.dt.static{cursor:default}
+.dt .dl{font-size:13px;color:var(--muted)}
+.dt .dv{font-size:19px;font-weight:600;overflow-wrap:anywhere}
+.dt small{font-size:12px;color:var(--muted)}
+.dt:hover:not(.static){border-color:var(--line-strong)}
+.dt.sel{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.dt.sel .dl,.dt.sel small{color:inherit}
+.dt.chip{display:inline-flex;flex-direction:row;padding:4px 12px;font-size:14px;border-radius:99px}
+.dt.note{border-style:dashed}
+.dlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.fhead{display:flex;gap:16px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.fhead .fsec{flex:1}
+.key{display:flex;gap:16px;font-size:13px;color:var(--muted)}
+.key b{color:var(--ink);font-weight:500}
+.key i,.flow-tip i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.kin{background:var(--flow-in)}.kout{background:var(--flow-out)}
+.flow{position:relative;margin:4px 0 14px}
+.flow svg{display:block;width:100%;height:auto}
+.flow .bin{fill:var(--flow-in)}.flow .bout{fill:var(--flow-out)}
+.flow .hit{fill:transparent}
+.flow .hit:hover{fill:var(--sunk);fill-opacity:.6}
+.flow .grid line{stroke:var(--line);stroke-width:1}
+.flow .zero{stroke:var(--line-strong);stroke-width:1}
+.flow .axis text{fill:var(--muted);font-size:11px;font-family:var(--f-ui)}
+.flow-tip{position:absolute;z-index:5;pointer-events:none;display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:6px 10px;font-size:12.5px;box-shadow:0 6px 18px rgba(0,0,0,.16);white-space:nowrap}
+.flow-tip[hidden]{display:none}
+.dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:24px;align-items:start}
+table.mini2 td{padding:5px 8px}
+table.mini2 tr[data-i]{cursor:pointer}
+/* List of Groups: Balance Sheet / Profit & Loss headings */
+tr.gsec td{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:14px}
+@media (max-width:820px){.dtiles{grid-template-columns:repeat(2,minmax(0,1fr))}.dcols{grid-template-columns:minmax(0,1fr)}}

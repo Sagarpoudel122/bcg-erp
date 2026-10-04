@@ -1,0 +1,38 @@
+/* Sign-in and business pages (no menu, the panel in the middle), form sections, colour swatches, logo, mailbox, company screens */
+body.bare .body{grid-template-columns:minmax(0,1fr) minmax(0,640px) minmax(0,1fr)}
+body.bare .side{display:none}
+body.bare main{grid-column:2;padding-top:56px}
+body.bare .keys{grid-column:3;padding-top:56px}
+@media (max-width:1100px){
+  body.bare .body{grid-template-columns:minmax(0,1fr);max-width:672px}
+  body.bare main,body.bare .keys{grid-column:1}
+  body.bare main{padding:32px 16px 16px}
+  body.bare .keys{padding:0 16px 120px}
+}
+
+/* Form sections and fields with something next to the input */
+.fsec{margin:18px 0 6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:3px}
+.fsec:first-child{margin-top:0}
+.fin{display:flex;gap:10px;align-items:center;min-width:0}
+.swatch{width:22px;height:22px;border-radius:4px;border:1px solid var(--line-strong);flex:none}
+.swatch.sm{width:16px;height:16px}
+.logo-prev{height:40px;max-width:120px;object-fit:contain;border:1px solid var(--line);border-radius:4px;background:#fff;padding:2px;flex:none}
+
+/* Top bar: the business (Alt+B) and the user (My Account) are buttons */
+.top .co,.top .user{background:none;border:0;padding:0;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.top .co{font-size:15px}.top .user{font-size:13px}
+.top .co:hover,.top .user:hover{color:var(--ink);text-decoration:underline}
+.top .logo{height:20px;max-width:60px;object-fit:contain;border-radius:3px}
+.paper .plogo{display:block;margin:0 auto 6px;max-height:48px;max-width:160px;object-fit:contain}
+
+/* Mailbox */
+tr.unread td{font-weight:600}
+.mail .mh{display:flex;gap:12px;font-size:13.5px;padding:1px 0}
+.mail .mh span{width:48px;color:var(--muted);flex:none}
+.mail .mb{border-top:1px solid var(--line);margin-top:10px;padding-top:6px}
+.mail .mb p{margin:8px 0;font-size:14.5px}
+.mail .mlink{margin-top:8px;width:auto;display:inline-block;color:var(--accent);font-weight:600;cursor:pointer;border-bottom-color:var(--accent)}
+
+/* Small tables under a form (sign-ins on My Account) */
+table.mini{max-width:520px}
+table.mini td{padding:4px 10px}

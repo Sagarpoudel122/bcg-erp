@@ -1,0 +1,17 @@
+/* Report tables and headings */
+/* Reports */
+.rp-head{text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line-strong)}
+.rp-head b{display:block}.rp-head .co{font-size:15px}.rp-head .sub{font-size:15px;color:var(--accent)}
+.rp-head .per{color:var(--muted);font-size:13px}
+.rep{width:100%;border-collapse:collapse}
+.rep td{padding:4px 10px;vertical-align:baseline}
+.rep td.num,.rep td.r,.rep th{white-space:nowrap}
+.rep tr.grp td,.rep td.grp{font-weight:600}
+.rep tr.sub td{font-weight:600;border-top:1px solid var(--line-strong)}
+.rep tr.tot td{font-weight:600;border-top:1px solid var(--ink);border-bottom:3px double var(--ink);padding-top:6px;padding-bottom:6px}
+.rep tr.diffrow td,.rep td.diffrow{color:var(--bad)}
+.rep.two td.sp,.rep.two th.sp{width:16px;padding:0;border-bottom:0}
+.rep.two th{border-bottom:1px solid var(--ink);color:var(--ink);font-weight:600}
+.rep.two td.sel{background:var(--gold);color:var(--gold-ink)}
+.rep tr[data-i]{cursor:pointer}
+.lrsel{margin-bottom:10px}
