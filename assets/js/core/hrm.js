@@ -18,12 +18,7 @@ const toMin=t=>{const p=String(t||'').split(':');return p.length===2?+p[0]*60+ +
 function E(id,name,desig,join,salary,phone){return{id,code:'E-'+id.slice(1).padStart(3,'0'),name,desig,join,basic:salary*100,phone,active:true}}   // basic = the monthly salary
 Object.assign(S,{
   mod:'acc',
-  emps:[E('e1','Ramesh Karki','Sales Executive','2080-04-01',40000,'9841000001'),
-        E('e2','Sunita Thapa','Cashier','2081-01-15',34000,'9841000002'),
-        E('e3','Bikash Gurung','Store Keeper','2079-06-10',31000,'9841000003'),
-        E('e4','Anita Rai','Accounts Assistant','2082-02-01',36000,'9841000004'),
-        E('e5','Prakash Adhikari','Delivery Staff','2082-09-20',24000,'9841000005')],
-  leaves:[],att:{},pay:{},
+  emps:[],leaves:[],att:{},pay:{},
   hs:{emp:{sel:0},lv:{sel:0},sal:{sel:0,m:Math.max(0,CUR_M-1)},my:{sel:0,m:CUR_M},myl:{sel:0},myp:{sel:0}}});
 Store.keys.push('emps','leaves','att','pay');Store.ui.push('mod');   // hs (screen positions) is not saved: pages hold references to it
 S.q.h1=true;
@@ -77,28 +72,13 @@ function salaryRows(m){
   return activeEmps().map(e=>({e,...calcPay(e,m),status:''}))}
 const sumRows=(rows,k)=>rows.reduce((a,r)=>a+r[k],0);
 // Paying a month saves the figures and (switch H1) posts one Payment voucher in Account: Dr Salary, Cr bank for the total.
+// Only when the business has those two ledgers (ids 'salary' and 'nic'); a new business has neither, so it only marks the month paid.
+const postsSalary=()=>S.q.h1!==false&&!!led('salary')&&!!led('nic');
 function payMonth(m){
   const rows=salaryRows(m);let no='';
   S.pay[m]={};rows.forEach(r=>{S.pay[m][r.e.id]={gross:r.gross,unpaid:r.unpaid,ded:r.ded,net:r.net,status:'Paid'}});
-  if(S.q.h1!==false&&led('salary')&&led('nic')){
+  if(postsSalary()){
     const net=sumRows(rows,'net'),ln=(side,lid)=>{const l=blankLine(side);l.lid=lid;l.amt=(net/100).toFixed(2);return l};
     const seq=++S.counters.payment,v={id:'v'+(++S.vid),type:'payment',seq,date:TODAY,lines:[ln('Dr','salary'),ln('Cr','nic')],narr:`Salary for ${mName(m)} (HRM)`,status:'Active',by:USER,uid:UID,pre:TYPES.payment.prefix};
     S.vouchers.push(v);audit('Created',v,`Salary for ${mName(m)} from HRM`);no=vno('payment',seq);Object.values(S.pay[m]).forEach(r=>r.voucher=no)}
   return no}
-
-/* ---------- Sample data (built once; the same figures every time) ---------- */
-(function seed(){
-  const lv=(eid,type,from,to,reason,status)=>addLeave(eid,type,from,to,reason,status);
-  lv('e1','Sick',serial(1,10),serial(1,11),'Fever','Approved');
-  lv('e3','Annual',serial(1,25),serial(1,27),'Family function','Approved');
-  lv('e5','Unpaid',serial(0,21),serial(0,21),'Personal work','Approved');
-  lv('e2','Casual',serial(2,19),serial(2,19),'Bank work','Pending');
-  lv('e4','Annual',serial(2,21),serial(2,22),'Dashain travel','Pending');
-  const rng=seed=>{let x=seed;return()=>{x=(x*1103515245+12345)&0x7fffffff;return x/0x7fffffff}};
-  S.emps.forEach((e,k)=>{const r=rng(7+k*13),a=S.att[e.id]={};
-    for(let s=0;s<TODAY;s++){if(isOff(s)||leaveOn(e.id,s))continue;
-      if(r()<0.04){a[s]={st:'A'};continue}
-      a[s]={st:'P',in:hm(570+Math.floor(r()*50)),out:hm(1050+Math.floor(r()*60))}}});
-  S.att.e2[TODAY]={st:'P',in:'10:20',out:''};S.att.e3[TODAY]={st:'P',in:'09:58',out:''};
-  S.pay[0]={};S.emps.forEach(e=>{const c=calcPay(e,0);S.pay[0][e.id]={gross:c.gross,unpaid:c.unpaid,ded:c.ded,net:c.net,status:'Paid'}});
-})();

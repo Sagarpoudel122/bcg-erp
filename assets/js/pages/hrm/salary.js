@@ -9,7 +9,7 @@ function doPay(){
   if(monthPaid(SH.m)){say(`${mName(SH.m)} is already paid.`,'bad');return}
   if(SH.m>=CUR_M){say(`${mName(SH.m)} is still running. Pay a month after it ends.`,'bad');return}
   const net=sumRows(salaryRows(SH.m),'net');
-  ask(`Pay salary for ${mName(SH.m)}? Total ${fmt(net)}.${S.q.h1!==false?' A Payment voucher is posted in Account (bank: NIC Asia).':''}`,()=>{
+  ask(`Pay salary for ${mName(SH.m)}? Total ${fmt(net)}.${postsSalary()?' A Payment voucher is posted in Account (bank: NIC Asia).':''}`,()=>{
     const no=payMonth(SH.m);render();say(no?`Salary paid. Payment voucher ${no} posted in Account.`:'Salary marked as paid.','ok')})}
 const openSlip=()=>{const r=salaryRows(SH.m)[SH.sel];if(!r)return;if(!monthPaid(SH.m)){say('Detail is available once the month is paid (Y).','bad');return}navigate('hrslip',{e:r.e.id,m:SH.m})};
 start({id:'hrsal',title:'Salary Spends',view:vSal,state:SH,activate:openSlip,

@@ -24,27 +24,17 @@ businesses, vouchers, employees and emails are all kept in the browser, so every
 "you are now the Owner") lands on the **Mailbox** page, for every address. Enter opens an email, Enter again follows its link.
 Open it with Alt+M on the sign-in pages, or from the menu (Prototype → Mailbox).
 
-**Sample users.** All use the password `Sample@123`. On the Sign in page **Alt+U** signs in as any of them in one step.
-
-| Email | Sample Traders Pvt. Ltd. | Himal Hardware Suppliers |
-|---|---|---|
-| sita@sample.test | **Owner** | Accountant |
-| hari@sample.test | Accountant | **Owner** |
-| gita@sample.test | Manager | |
-| ramesh@sample.test | Sales/Cashier, linked to employee Ramesh Karki | |
-| sunita@sample.test | Employee (HRM only), linked to Sunita Thapa | |
-| mohan@sample.test | Viewer | |
-| kiran@sample.test | Deactivated | |
-| anita@sample.test (no account yet) | invitation waiting in the Mailbox (Accountant) | |
-| bikash@sample.test (no account yet) | invitation expired (R on User Management sends it again) | |
-
-Sample Traders has the sample ledgers, vouchers and employees; Himal Hardware and every newly registered business start
-with only the default ledgers (Cash, Profit & Loss, VAT, TDS Payable, Sales, Purchase), no vouchers and no employees.
+**Nothing is preset.** A new browser has no users, no businesses and no emails: no sample accounts to pick from, no sample
+ledgers, vouchers or employees. The first person creates an account (Alt+N on the Sign in page), opens the verification
+link in the Mailbox, signs in and registers a business. Every business starts with only the default ledgers (Cash,
+Profit & Loss, VAT, TDS Payable, Sales, Purchase), no vouchers and no employees. A browser that still holds the old sample data
+(Sample Traders, Himal Hardware and the `@sample.test` users) loses just those records the next time it opens the prototype;
+accounts and businesses made by hand stay.
 
 | Screen | What it does |
 |---|---|
 | **Sign in** | 5 wrong passwords lock the account for 15 minutes. An unverified email cannot sign in (it offers to resend the link). |
-| **Create account** | name, email, mobile (optional), password twice. Password rules: 8+ characters, not only digits, not a common password, not like your name or email. Open self sign-up (B1 is still open). |
+| **Create account** | name, email, mobile (optional), password twice. Password rule: at least 8 characters, nothing else. Open self sign-up (B1 is still open). |
 | **Select Business** | your businesses and role in each, invitations waiting for your email (Enter accepts), businesses you deleted (Enter restores, 30 days). N registers a new business. |
 | **Business Registration** | required: name, address, phone, books-beginning date (BS). Optional: type, email, PAN (9 digits), VAT registered (needs PAN). A PAN already used by one of your businesses asks first. You become the Owner. |
 | **Business Setup** | Business (name, type, address, phone, email) · Branding (logo: Space picks a picture, Delete removes; logo on prints Y/N; two brand colours) · Tax (PAN, VAT, VAT rate) · Books (FY, books beginning, **lock books up to**: Owner only) · Voucher numbering (prefix per type; a saved voucher keeps its prefix). Shows "% complete" of the optional items. Admin edits, Accountant / Manager / Viewer see it read-only. **Alt+D** deletes the business (Owner; restorable 30 days). |
@@ -156,7 +146,7 @@ Business Tools  one screen for now, the list of tools is decided later
 | Admin, Manager | **Create Employee** (name, designation, joining date, phone, monthly salary, and optionally a login email that sends an Employee invitation) · **Employee List** (Enter alters, N creates; the Login column shows who can sign in) · **Approve Leave** (Enter opens the request; A approve or R reject with a remark) · **Salary Spends** (month by month; Y pays the month; Enter opens one employee's salary detail) |
 | Linked to an employee | **Attendance** (I punch in, O punch out) · **Leave** (N apply, list with status) · **Salary** (one row per paid month, Enter for the detail) |
 
-Sample rules (change them in `core/hrm.js`): Saturday is the weekly off; a past working day with no punch counts as absent; absent and unpaid-leave days are deducted at salary / days in the month; leave per year is Annual 18, Sick 12, Casual 6, plus Unpaid. Paying a month saves the figures and (switch **H1** on the Options page) posts one Payment voucher in Account: Dr Salary / Cr NIC Asia bank.
+Sample rules (change them in `core/hrm.js`): Saturday is the weekly off; a past working day with no punch counts as absent; absent and unpaid-leave days are deducted at salary / days in the month; leave per year is Annual 18, Sick 12, Casual 6, plus Unpaid. Paying a month saves the figures and (switch **H1** on the Options page) posts one Payment voucher in Account (Dr Salary / Cr NIC Asia bank) when the business has ledgers with those ids; a new business has neither, so paying only marks the month paid.
 
 ## How a page works
 
@@ -202,14 +192,13 @@ whether the page may open at all.
 | `bcg.ui.<business>.<user>` | where one user left the screens in that business: drafts, Day Book position, dashboard period, menu part |
 | `bcg.flash` | a message for the next page (for example "Email verified") |
 
-Businesses never see each other's data. Data saved by the earlier one-business prototype (`bcg-erp-prototype-v1`) becomes
-Sample Traders' data the first time. Passwords are hashed, but nothing here is secure: it is a prototype in the browser.
-**Alt+R on the Options page** resets the whole prototype to the sample data and signs you out.
+Businesses never see each other's data. Passwords are hashed, but nothing here is secure: it is a prototype in the browser.
+**Alt+R on the Options page** erases the whole prototype (all users, businesses and data) and signs you out; it starts empty again.
 
 ## Keyboard
 
 The same rules as before: Enter next field, Backspace previous field, Esc back (and then the menu), Ctrl+A accept,
-Alt+G Go To, Alt+B change business, Alt+Q log out, F4 to F7 vouchers, F2 date or period, Ctrl+E example voucher,
+Alt+G Go To, Alt+B change business, Alt+Q log out, F4 to F7 vouchers, F2 date or period,
 Ctrl+H Account layout. In forms, Y / N (or Space) answer Yes/No fields and a picture field opens the file chooser with Space.
 Browser shortcuts are blocked. Warnings and questions are popups, successes are a toast at the top right, hints stay in the bar at the bottom.
 

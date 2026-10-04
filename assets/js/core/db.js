@@ -18,7 +18,6 @@ const flash=(text,kind='ok')=>LS.set('bcg.flash',{text,kind});
 function takeFlash(){const f=LS.get('bcg.flash');if(f)LS.del('bcg.flash');return f}
 
 /* ---------- small helpers ---------- */
-const SAMPLE_PW='Sample@123';   // the password of every sample user (see README)
 const DAY=864e5,now=()=>Date.now();
 const normEmail=e=>String(e||'').trim().toLowerCase();
 const isEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(e||'').trim());
@@ -32,29 +31,14 @@ function newToken(){const a=new Uint8Array(16);try{crypto.getRandomValues(a)}cat
 function ago(t){const s=Math.round((now()-t)/1000);if(s<60)return'just now';const m=Math.round(s/60);if(m<60)return`${m} min ago`;
   const h=Math.round(m/60);if(h<24)return`${h} hour${h>1?'s':''} ago`;const d=Math.round(h/24);return`${d} day${d>1?'s':''} ago`}
 function leftText(t){const ms=t-now();if(ms<=0)return'';const h=Math.ceil(ms/36e5);return h<48?`${h} hour${h>1?'s':''}`:`${Math.ceil(ms/DAY)} days`}
-// Password rules (as Django's validators): at least 8 characters, not only digits, not a common password, not like the name or email
-const COMMON_PW=['password','password1','password123','12345678','123456789','1234567890','qwerty123','qwertyuiop','iloveyou','admin123','welcome1','welcome123','nepal123','kathmandu','abc12345','11111111','00000000','letmein1'];
-// Django's UserAttributeSimilarityValidator: the password is compared with the whole name / email and with each word of it;
-// it is too similar when difflib's quick_ratio is 0.7 or more. A short word against a much longer password is skipped.
-function quickRatio(a,b){const n={};for(const c of b)n[c]=(n[c]||0)+1;let m=0;for(const c of a)if(n[c]>0){n[c]--;m++}return a.length+b.length?2*m/(a.length+b.length):1}
-function similarPart(pw,attrs){const p=String(pw).toLowerCase();
-  for(const[what,v]of attrs){const low=String(v||'').toLowerCase().trim();if(!low)continue;
-    for(const part of [...low.split(/\W+/),low]){if(!part)continue;
-      if(p.length>=10*part.length&&part.length<0.35*p.length)continue;
-      if(quickRatio(p,part)>=0.7)return{what,part}}}
-  return null}
-function pwProblem(pw,email,name){pw=String(pw||'');
-  if(pw.length<8)return'The password needs at least 8 characters.';
-  if(/^\d+$/.test(pw))return'The password cannot be only numbers.';
-  if(COMMON_PW.includes(pw.toLowerCase()))return'This password is too common. Pick another one.';
-  const like=similarPart(pw,[['name',name],['email',email]]);
-  if(like)return`The password is too much like your ${like.what} ("${like.part}"). Pick one that cannot be guessed from it.`;
-  return''}
+// Password rule: at least 8 characters, nothing else
+const PW_HINT='At least 8 characters.';
+const pwProblem=pw=>String(pw||'').length<8?'The password needs at least 8 characters.':'';
 
 /* ---------- the database ---------- */
 const DB={
   KEY:'bcg.db',d:null,
-  load(){let d=LS.get(this.KEY);if(!d||d.v!==2)d=seedDB();this.d=d;this.purge();this.save()},
+  load(){let d=LS.get(this.KEY);if(!d||(d.v!==2&&d.v!==DB_VERSION))d=emptyDB();else if(d.v===2)d=dropSamples(d);this.d=d;this.purge();this.save()},
   save(){LS.set(this.KEY,this.d)},
   nid(p){return p+(++this.d.seq)},
   user:id=>DB.d.users.find(u=>u.id===id)||null,
@@ -148,36 +132,26 @@ const DB={
 // Write an entry into a business's audit log from a page that does not have the business open (for example accepting an invitation)
 function bizAudit(bid,u,action,detail){const k='bcg.biz.'+bid,b=LS.get(k);if(!b)return;
   (b.audit=b.audit||[]).push({time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}),user:u?u.name:'',action,no:'',detail});LS.set(k,b)}
-// Alt+R on the Options page: everything back to the sample data, signed out
+// Alt+R on the Options page: everything erased (no users, no businesses), signed out
 function resetAll(){if(typeof Store!=='undefined')Store.ready=false;
   LS.keys().filter(k=>k.startsWith('bcg.')||k==='bcg-erp-prototype-v1').forEach(k=>LS.del(k));try{window.name=''}catch(e){}
   location.href='login.html'}
 
-/* ---------- sample data, made the first time ---------- */
-function seedDB(){
-  const t=now(),d={v:2,seq:100,users:[],businesses:[],members:[],invites:[],tokens:[],mails:[],sessions:[],logins:[]};
-  const U=(id,name,email,phone)=>d.users.push({id,name,email,phone,pw:hashPw(SAMPLE_PW,id),verified:true,created:t-60*DAY,failed:0,lockUntil:0,date:'BS'});
-  U('u1','Sita Sharma','sita@sample.test','9851000001');U('u2','Hari Bhandari','hari@sample.test','9851000002');U('u3','Gita Shrestha','gita@sample.test','9851000003');
-  U('u4','Ramesh Karki','ramesh@sample.test','9841000001');U('u5','Sunita Thapa','sunita@sample.test','9841000002');U('u6','Mohan Joshi','mohan@sample.test','9851000006');
-  U('u7','Kiran Basnet','kiran@sample.test','9851000007');
-  const B=(o)=>d.businesses.push(Object.assign({type:'Trading',email:'',pan:'',vat:false,vatRate:'13',books:'2083-04-01',logo:'',printLogo:true,c1:'',c2:'',
-    prefix:{contra:'CTR',payment:'PMT',receipt:'RCT',journal:'JRN'},lockTo:null,created:t-60*DAY,deleted:0},o));
-  // b1 keeps the sample ledgers, vouchers and employees the prototype always had; b2 starts empty
-  B({id:'b1',sample:true,name:'Sample Traders Pvt. Ltd.',address:'Putalisadak, Kathmandu',phone:'01-4412345',email:'info@sample.test',pan:'600000000',vat:true,c1:'#0B5E57',c2:'#FFD966',lockTo:serial(0,31)});
-  B({id:'b2',name:'Himal Hardware Suppliers',address:'Mahendrapul, Pokhara',phone:'061-520000',created:t-20*DAY});
-  const M=(biz,user,role,o)=>d.members.push(Object.assign({id:'m'+(++d.seq),biz,user,role,owner:false,emp:'',status:'Active',since:t-50*DAY},o));
-  M('b1','u1','admin',{owner:true});M('b1','u2','accountant');M('b1','u3','manager');M('b1','u4','sales',{emp:'e1'});M('b1','u5','employee',{emp:'e2'});
-  M('b1','u6','viewer');M('b1','u7','sales',{status:'Inactive'});
-  M('b2','u2','admin',{owner:true,since:t-20*DAY});M('b2','u1','accountant',{since:t-20*DAY});
-  const I=(email,name,role,emp,daysAgo)=>{const i={id:'inv'+(++d.seq),token:newToken(),biz:'b1',email,name,role,emp,by:'u1',sent:t-daysAgo*DAY,expires:t+(7-daysAgo)*DAY,status:'Pending'};d.invites.push(i);
-    d.mails.push({id:'mail'+(++d.seq),to:email,subject:'Sita Sharma invited you to Sample Traders Pvt. Ltd. on BCG ERP',
-      body:[`Hi ${name},`,`Sita Sharma invited you to join Sample Traders Pvt. Ltd. on BCG ERP as ${({accountant:'Accountant',employee:'Employee'})[role]}.`,'The invitation is valid for 7 days.'],
-      link:{label:'Accept invitation',href:`accept-invite.html?t=${i.token}`},at:i.sent,read:false})};
-  I('bikash@sample.test','Bikash Gurung','employee','e3',9);   // expired: R on User Management sends it again
-  I('anita@sample.test','Anita Rai','accountant','e4',2);       // waiting: open it from the Mailbox
-  // Data saved by the earlier one-business prototype becomes Sample Traders' data
-  const old=LS.get('bcg-erp-prototype-v1');if(old&&!LS.get('bcg.biz.b1'))LS.set('bcg.biz.b1',old);
-  return d}
+/* ---------- the first time: nothing in it ---------- */
+// No users, businesses or emails. The first person creates an account (Create account), then registers a business.
+const DB_VERSION=3;
+const emptyDB=()=>({v:DB_VERSION,seq:100,users:[],businesses:[],members:[],invites:[],tokens:[],mails:[],sessions:[],logins:[]});
+// A browser that still holds the earlier sample data (version 2: the @sample.test users and the businesses b1 and b2) loses only those
+// records. Accounts and businesses made by hand stay.
+function dropSamples(d){
+  const us=new Set(d.users.filter(u=>u.email.endsWith('@sample.test')).map(u=>u.id)),bs=new Set(['b1','b2']);
+  d.users=d.users.filter(u=>!us.has(u.id));d.businesses=d.businesses.filter(b=>!bs.has(b.id));
+  d.members=d.members.filter(m=>!us.has(m.user)&&!bs.has(m.biz));
+  d.invites=d.invites.filter(i=>!bs.has(i.biz)&&!i.email.endsWith('@sample.test'));
+  d.mails=d.mails.filter(m=>!m.to.endsWith('@sample.test'));
+  d.tokens=d.tokens.filter(t=>!us.has(t.user));d.sessions=d.sessions.filter(s=>!us.has(s.user));d.logins=d.logins.filter(l=>!us.has(l.user));
+  LS.keys().filter(k=>[...bs].some(id=>k==='bcg.biz.'+id||k.startsWith(`bcg.ui.${id}.`))).forEach(k=>LS.del(k));
+  LS.del('bcg-erp-prototype-v1');d.v=DB_VERSION;return d}
 
 DB.load();
 // Who is signed in on this browser and which business is open. Fixed for the life of a page (every screen is its own page).

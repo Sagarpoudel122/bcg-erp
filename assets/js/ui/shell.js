@@ -136,7 +136,7 @@ function start(page){
   const to=gate(page);if(to){location.replace(to);return}
   document.body.classList.toggle('bare',!!page.bare);
   if(!page.bare){
-    if(!Store.load()){if(CUR.biz.sample)seedVouchers();else freshBusiness()}
+    if(!Store.load())freshBusiness()
     rebuildGroups();if(!GM[S.lf.group])S.lf.group='Sundry Debtors';   // custom groups of this business; a draft may point at a deleted one
     const parts=myParts(),part=modOf(page.id);S.mod=part&&parts.includes(part)?part:parts.includes(S.mod)?S.mod:parts[0];buildNav()}
   S.view=page.id;S.sb=!page.bare&&isGate(page.id);S.msg=null;S.ask=null;

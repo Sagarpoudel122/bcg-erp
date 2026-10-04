@@ -78,10 +78,6 @@ function nextLine(i){const d=draft(S.view);
   if(i<d.lines.length-1){focusEl(`#L${i+1}-lid`);return}
   if(d.mode==='single'){addLine();return}
   const{dr,cr}=totals(d);if(dr===cr&&dr>0){focusEl('#narr');return}addLine()}
-function nextExample(){const type=S.view,d=draft(type);if(d.editingId)return;const n=EX[type].length;const i=S.exi[type]==null?0:S.exi[type]+1;
-  if(i>=n){S.exi[type]=null;S.drafts[type]=blank(type);render(firstField(type));say('Blank voucher.');return}
-  S.exi[type]=i;const miss=loadExample(type,i);render(firstField(type));
-  say(`Example ${i+1} of ${n}: ${EX[type][i].label}.`+(miss.length?` ${miss.join(', ')} is not available. See Prototype options.`:''),miss.length?'warn':'')}
 function badTarget(d,c){const last=d.lines.length-1;
   if(c.t==='Date')return'#vdate';
   if(c.t==='Lines'){const i=d.lines.findIndex(l=>(l.lid||cents(l.amt))&&(!l.lid||cents(l.amt)<=0));return`#L${i>=0?i:last}-${i>=0&&d.lines[i].lid?'amt':'lid'}`}
@@ -99,7 +95,7 @@ function save(){const type=S.view,d=draft(type);
     Object.assign(v,{date,lines,narr:d.narr});const nw=fmt(lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0));
     audit('Edited',v,old!==nw?`Amount ${old} → ${nw}`:'Details changed');S.drafts[type]=blank(type);S.db.date=v.date;flash(`${vno(type,v.seq,v.pre)} updated.`);navigate('daybook');return}
   const seq=++S.counters[type];const v={id:'v'+(++S.vid),type,seq,date,lines,narr:d.narr,status:'Active',by:USER,uid:UID,pre:TYPES[type].prefix};S.vouchers.push(v);audit('Created',v);
-  S.lastVid=v.id;S.drafts[type]=blank(type);S.drafts[type].date={...d.date};S.exi[type]=null;sanitize();
+  S.lastVid=v.id;S.drafts[type]=blank(type);S.drafts[type].date={...d.date};sanitize();
   render(firstField(type));say(`Saved as ${vno(type,seq)}.`,'ok')}
 /* ---------- popups: bill details, cheque details, new ledger ---------- */
 function allocSumHtml(ln){const sum=ln.alloc.reduce((a,b)=>a+cents(b.amt),0),c=cents(ln.amt);return `<b class="${sum===c&&c>0?'okt':'badt'}">${fmt(sum)} of ${fmt(c)}</b>`}
@@ -207,7 +203,6 @@ start({
     {k:'Enter',l:'Next field'},{k:'Backspace',l:'Previous field'},{gap:1},
     ...(can('ledger.create')?[{k:'Alt+C',l:'Create ledger',a:newLedgerHere}]:[]),{k:'Alt+L',l:'Add line',a:addLine},{k:'Ctrl+D',l:'Delete line',a:delLine}];
     if(ACC[v])r.push({k:'Ctrl+H',l:d.mode==='single'?'Dr/Cr mode':'Account mode',a:toggleMode});
-    if(!d.editingId)r.push({k:'Ctrl+E',l:'Try an example',a:nextExample});
     if(S.lastVid)r.push({k:'Alt+P',l:'Print last saved',a:()=>openPrint(S.lastVid)});
     r.push({gap:1},{k:'Ctrl+A',l:'Accept',a:trySave},escKey());return r},
   back(){const v=TYPE,d=draft(v);const leave=()=>{if(d.editingId){S.drafts[v]=blank(v);go('daybook')}else focusSidebar()};

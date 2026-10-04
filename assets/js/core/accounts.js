@@ -32,17 +32,6 @@ function initAlloc(d,ln){
   const settling=(kind==='debtor'&&ln.side==='Cr')||(kind==='creditor'&&ln.side==='Dr');
   ln.alloc=settling&&pend.length?[{t:'Against',ref:pend[0].ref,amt:ln.amt}]:[{t:'New',ref:'',amt:ln.amt,days:l.creditDays}];
 }
-function loadExample(type,i,silent){
-  const e=EX[type][i];const d=blank(type);d.date={m:e.date[0],d:e.date[1]};d.narr=e.narr;const missing=[];
-  d.lines=e.lines.map(([side,lid,amt,o])=>{const ln=blankLine(side);const l=led(lid);
-    if(!visible(l)){missing.push(l?l.name:lid);return ln}
-    ln.lid=lid;ln.amt=String(amt);
-    if(o&&o.inst)ln.inst=Object.assign(ln.inst,o.inst);
-    if(o&&o.alloc)ln.alloc=clone(o.alloc);else initAlloc(d,ln);
-    return ln});
-  d.mode='double';S.drafts[type]=d;
-  return missing;
-}
 /* ---------- Checks ---------- */
 function totals(d){let dr=0,cr=0;for(const l of d.lines){const c=cents(l.amt);if(l.side==='Dr')dr+=c;else cr+=c}return{dr,cr}}
 function checks(d){

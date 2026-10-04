@@ -1,10 +1,10 @@
 /* Choose a new password from the emailed link (?t=<token>). It also lifts a lock and signs the account out everywhere. */
 const RP=form({id:'rp',v:{pw:'',pw2:''},accept:()=>doReset(),
-  fields:[{k:'pw',l:'New password',type:'password',ac:'new-password',hint:'At least 8 characters, not only numbers, not like your name or email.'},
+  fields:[{k:'pw',l:'New password',type:'password',ac:'new-password',hint:PW_HINT},
     {k:'pw2',l:'New password again',type:'password',ac:'new-password'}]});
 let RT={why:'',user:null};
 function doReset(){const v=RP.v,u=RT.user;
-  const pp=pwProblem(v.pw,u.email,u.name);if(pp)return fmBad(RP,'pw',pp);
+  const pp=pwProblem(v.pw);if(pp)return fmBad(RP,'pw',pp);
   if(v.pw!==v.pw2)return fmBad(RP,'pw2','The two passwords are not the same.');
   const r=DB.resetPassword(param('t'),v.pw);if(!r.user){RT.why=r.why;render();return}
   LS.set('bcg.lastEmail',u.email);flash('Password changed. Sign in with the new password.');location.href=href('login')}

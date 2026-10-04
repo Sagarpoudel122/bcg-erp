@@ -1,4 +1,4 @@
-/* Fixed data: groups, voucher types, bill labels, entry examples. The signed-in user and open business come from core/db.js. */
+/* Fixed data: groups, voucher types, bill labels. The signed-in user and open business come from core/db.js. */
 // Who is working (shown in the audit log, on vouchers and on prints) and in which business
 let USER=CUR.user?`${CUR.user.name} (${roleName(CUR.member)||'no business'})`:'';
 const UID=CUR.user?CUR.user.id:'';
@@ -35,22 +35,4 @@ const TYPES={
  journal:{name:'Journal',key:'F7',prefix:'JRN',sketch:7,rule:'Adjustments with no cash or bank: credit purchases, depreciation, corrections.'}};
 // Voucher number prefixes are set per business in Business Setup. A saved voucher keeps the prefix it was saved with.
 if(CUR.biz&&CUR.biz.prefix)for(const t in TYPES)TYPES[t].prefix=CUR.biz.prefix[t]||TYPES[t].prefix;
-const EX={
- contra:[
-  {label:'Deposit cash into bank',date:[2,12],narr:'Cash deposited to NIC Asia',lines:[['Dr','nic',50000],['Cr','cash',50000]]},
-  {label:'Withdraw cash from OD (needs Q1)',date:[2,14],narr:'Cash withdrawn from Nabil OD for petty expenses',lines:[['Dr','cash',20000],['Cr','nabilod',20000,{inst:{open:true,type:'Cheque',no:'778201',date:'14 Asoj'}}]]},
-  {label:'Mistake: only one side',mistake:1,date:[2,14],narr:'',lines:[['Dr','nic',10000],['Dr','cash',10000]]}],
- payment:[
-  {label:'Rent with 10% TDS',date:[2,10],narr:'Asoj shop rent, TDS 10% deducted',lines:[['Dr','rent',10000],['Cr','tdsp',1000],['Cr','nic',9000,{inst:{open:true,type:'Cheque',no:'004512',date:'10 Asoj'}}]]},
-  {label:'Pay supplier: old bill + advance',date:[2,14],narr:'Paid Shyam Suppliers, bill P-88 and advance',lines:[['Dr','shyam',20000,{alloc:[{t:'Against',ref:'#P-88',amt:'15000'},{t:'Advance',ref:'',amt:'5000'}]}],['Cr','cash',20000]]},
-  {label:'Mistake: bank on Dr side',mistake:1,date:[2,14],narr:'',lines:[['Dr','nic',5000],['Cr','cash',5000]]}],
- receipt:[
-  {label:'Customer pays bill #12, cuts 1.5% TDS',date:[2,13],narr:'Received from Ram Traders against bill #12',lines:[['Dr','nic',9850],['Dr','tdsr',150],['Cr','ram',10000,{alloc:[{t:'Against',ref:'#12',amt:'10000'}]}]]},
-  {label:'Cash sale (needs Q4)',date:[2,15],narr:'Counter cash sales',lines:[['Dr','cash',5000],['Cr','sales',5000]]},
-  {label:'Mistake: date in a locked period',mistake:1,date:[0,20],narr:'Late entry',lines:[['Dr','cash',3000],['Cr','ram',3000,{alloc:[{t:'On Account',ref:'',amt:'3000'}]}]]}],
- journal:[
-  {label:'Credit purchase with VAT',date:[2,11],narr:'Goods bought on credit, supplier bill P-102',lines:[['Dr','purchase',20000],['Dr','vat',2600],['Cr','shyam',22600,{alloc:[{t:'New',ref:'#P-102',amt:'22600',days:45}]}]]},
-  {label:'Depreciation',date:[2,15],narr:'Depreciation on furniture',lines:[['Dr','dep',12000],['Cr','furn',12000]]},
-  {label:'Mistake: Dr ≠ Cr',mistake:1,date:[2,15],narr:'Salary provision',lines:[['Dr','salary',30000],['Cr','tdsp',300]]}],
-};
 const TL={New:'New Ref',Against:'Against Ref',Advance:'Advance','On Account':'On Account'};

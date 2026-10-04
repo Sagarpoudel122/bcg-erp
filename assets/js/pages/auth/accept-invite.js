@@ -6,7 +6,7 @@ const otherUser=()=>!!(CUR.user&&IV&&CUR.user.email!==IV.email);
 const AI=form({id:'ai',v:{email:'',name:'',phone:'',pw:'',pw2:''},accept:()=>acceptIv(),last:()=>acceptIv(),
   fields:[{k:'email',l:'Email',type:'ro'},
     {k:'name',l:'Full name',ph:'English or नेपाली',when:()=>!IVU},{k:'phone',l:'Mobile',ph:'Optional',when:()=>!IVU},
-    {k:'pw',l:'Choose a password',type:'password',ac:'new-password',when:()=>!meIsInvitee(),hint:'At least 8 characters, not only numbers, not like your name or email.'},
+    {k:'pw',l:'Choose a password',type:'password',ac:'new-password',when:()=>!meIsInvitee(),hint:PW_HINT},
     {k:'pw2',l:'Password again',type:'password',ac:'new-password',when:()=>!IVU}]});
 function acceptIv(){const v=AI.v;let u=IVU;
   if(u&&!meIsInvitee()){if(!v.pw)return fmBad(AI,'pw','Type your password.');
@@ -14,7 +14,7 @@ function acceptIv(){const v=AI.v;let u=IVU;
     const r=DB.login(u.email,v.pw);if(!r.ok){AI.v.pw='';render();return fmBad(AI,'pw',r.msg)}}
   if(!u){if(!v.name.trim())return fmBad(AI,'name','Type your name.');
     if(v.phone.trim()&&!isPhone(v.phone))return fmBad(AI,'phone','Type the mobile number with digits only, or leave it empty.');
-    const pp=pwProblem(v.pw,IV.email,v.name);if(pp)return fmBad(AI,'pw',pp);
+    const pp=pwProblem(v.pw);if(pp)return fmBad(AI,'pw',pp);
     if(v.pw!==v.pw2)return fmBad(AI,'pw2','The two passwords are not the same.');
     u=DB.createUser({name:v.name,email:IV.email,phone:v.phone,pw:v.pw,verified:true});DB.startSession(u.id)}
   const m=DB.acceptInvite(IV,u.id);DB.useBiz(IV.biz);flash(`Welcome to ${dot(IVB.name)} You are ${roleName(m)} here.`);location.href=href(landingFor(m))}

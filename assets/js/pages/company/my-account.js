@@ -10,10 +10,10 @@ function saveAcc(){const v=AC.v;
   setDateMode(ME.date==='AD');USER=`${ME.name} (${roleName(CUR.member)})`;render('#ac-name');say('Saved.','ok')}
 /* ---------- change password (popup) ---------- */
 const PWF=form({id:'pw',v:{old:'',pw:'',pw2:''},fields:[{k:'old',l:'Current password',type:'password',ac:'current-password'},
-  {k:'pw',l:'New password',type:'password',ac:'new-password',hint:'At least 8 characters, not only numbers, not like your name or email.'},{k:'pw2',l:'New password again',type:'password',ac:'new-password'}]});
+  {k:'pw',l:'New password',type:'password',ac:'new-password',hint:PW_HINT},{k:'pw2',l:'New password again',type:'password',ac:'new-password'}]});
 function savePw(){const v=PWF.v;
   if(ME.pw!==hashPw(v.old,ME.id))return fmBad(PWF,'old','The current password is wrong.');
-  const pp=pwProblem(v.pw,ME.email,ME.name);if(pp)return fmBad(PWF,'pw',pp);
+  const pp=pwProblem(v.pw);if(pp)return fmBad(PWF,'pw',pp);
   if(v.pw===v.old)return fmBad(PWF,'pw','Pick a password different from the current one.');
   if(v.pw!==v.pw2)return fmBad(PWF,'pw2','The two new passwords are not the same.');
   DB.setPassword(ME,v.pw);DB.endAll(ME.id,true);P.then=null;closePanel();say('Password changed. Your other devices are signed out.','ok')}
