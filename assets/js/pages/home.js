@@ -44,9 +44,9 @@ function vDash(){ACTS=[];const r=dashRange(),asAt=Math.min(r.to,TODAY),B=balance
   const tile=(label,c,act,sub)=>{const i=act?reg(act):-1;return `<div class="dt ${i<0?'static':selc(i)}" ${i<0?'':`data-i="${i}"`}><span class="dl">${label}</span><b class="dv">${fmt(c)}</b>${sub?`<small>${sub}</small>`:''}</div>`};
   const toRep=(v,q)=>()=>{S.rstack=[{url:href('home',{back:1}),sel:0}];S.rep.to=asAt;S.rep.sel=0;navigate(v,q)};
   const rep=can('reports'),cashL=S.ledgers.filter(l=>isCash(l)&&visible(l)),cashTot=cashL.reduce((a,l)=>a+B[l.id].cl,0);
-  let tiles=tile('To receive',gTotal('Sundry Debtors',B),rep&&toRep('gsum',{g:'Sundry Debtors'}),'as at '+bsShort(asAt))
-    +tile('To give',-gTotal('Sundry Creditors',B),rep&&toRep('gsum',{g:'Sundry Creditors'}),'as at '+bsShort(asAt))
-    +tile('Cash & Bank',cashTot,null,`${cashL.length} ledger${cashL.length===1?'':'s'}`);
+  let tiles=tile('Amount Receivable',gTotal('Sundry Debtors',B),rep&&toRep('gsum',{g:'Sundry Debtors'}),'as at '+bsShort(asAt))
+    +tile('Amount Payable',-gTotal('Sundry Creditors',B),rep&&toRep('gsum',{g:'Sundry Creditors'}),'as at '+bsShort(asAt))
+    +tile('Cash & Bank',cashTot,rep&&toRep('gsum',{g:'Cash & Bank'}),`${cashL.length} ledger${cashL.length===1?'':'s'}`);
   if(full)tiles+=tile('Sales',-moved(['Sales Accounts'],r.from,r.to),rep&&toRep('gsum',{g:'Sales Accounts'}),r.label)
     +tile('Purchase',moved(['Purchase Accounts'],r.from,r.to),rep&&toRep('gsum',{g:'Purchase Accounts'}),r.label)
     +tile('Expenses',moved(['Direct Expenses','Indirect Expenses'],r.from,r.to),rep&&toRep('pl'),r.label);

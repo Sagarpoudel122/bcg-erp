@@ -88,10 +88,12 @@ function onKey(e){
     else if(k==='Enter'||k==='Escape'||k===' ')closeAlert();
     return}
   if(!$('#modal').hidden){if(k==='Escape'||k==='Enter'){stop(e);closePrint()}return}
+  if(CALC.open){calcKey(e);return}   // the calculator (ui/calc.js) takes every key; typing passes through to its field
   const t=e.target;
   if(PK.input&&t===PK.input&&pickKey(e))return;
-  if(P){panelKey(e);return}
   const kn=keyName(e);
+  if(kn==='Alt+C'&&t.dataset&&t.dataset.amt!==undefined){stop(e);openCalc(t);return}   // Alt+C in an Amount field: calculator (elsewhere it stays "Create ledger")
+  if(P){panelKey(e);return}
   if(!PAGE.bare){
     if(GKEYS[kn]&&canSee(GKEYS[kn])){stop(e);go(GKEYS[kn]);return}
     if(kn==='Alt+G'){stop(e);openGoto();return}

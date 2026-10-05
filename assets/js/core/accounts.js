@@ -26,11 +26,10 @@ function pendingBills(lid,excludeVid){
         if(a.t==='Against'){const b=bills.find(b=>b.ref===a.ref);if(b)b.rem-=cents(a.amt)} } } }
   return bills.filter(b=>b.rem>0);
 }
+// Bill details always start as On Account; the user can switch a row to Against Ref, New Ref or Advance in the popup.
 function initAlloc(d,ln){
   const l=led(ln.lid);if(!l||!l.billwise){ln.alloc=[];return}
-  const pend=pendingBills(l.id,d.editingId);const kind=GM[l.group].kind;
-  const settling=(kind==='debtor'&&ln.side==='Cr')||(kind==='creditor'&&ln.side==='Dr');
-  ln.alloc=settling&&pend.length?[{t:'Against',ref:pend[0].ref,amt:ln.amt}]:[{t:'New',ref:'',amt:ln.amt,days:l.creditDays}];
+  ln.alloc=[{t:'On Account',ref:'',amt:ln.amt,days:l.creditDays}];
 }
 /* ---------- Checks ---------- */
 function totals(d){let dr=0,cr=0;for(const l of d.lines){const c=cents(l.amt);if(l.side==='Dr')dr+=c;else cr+=c}return{dr,cr}}

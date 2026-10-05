@@ -15,10 +15,11 @@
   .keys{border-top:1px solid var(--line);padding:12px 0 120px;flex-direction:row;flex-wrap:wrap}
   .keys .gap{display:none}
   .f{grid-template-columns:minmax(0,1fr)}
-  .lh{display:none}
-  .line,.lh{grid-template-columns:40px minmax(0,1fr) 120px;gap:0 8px}
-  .acct,.lines.single .lh,.line.single{grid-template-columns:70px minmax(0,1fr) 110px}
-  .line.single{grid-template-columns:minmax(0,1fr) 110px}
+  .line,.lh,.totals{gap:0 6px}
+  .line,.lh{grid-template-columns:36px minmax(0,1fr) 92px 92px}
+  .acct{grid-template-columns:62px minmax(0,1fr) 92px 92px;gap:0 6px}
+  .lh.single,.line.single,.totals{grid-template-columns:minmax(0,1fr) 92px 92px}
+  .line .in.amt,.acct .acctamt{padding-left:2px;padding-right:2px;font-size:14px}
   .narr{grid-template-columns:minmax(0,1fr)}
   .prow.a,.prow.i,.prow.b{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .top{padding:10px 16px}#status{padding:9px 16px}

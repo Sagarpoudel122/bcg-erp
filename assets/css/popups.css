@@ -43,3 +43,11 @@
 .acard .abtn{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:4px;padding:6px 22px;display:inline-flex;gap:8px;align-items:center}
 .acard .abtn.ghost{background:none;color:var(--ink);border-color:var(--line-strong)}
 .acard .abtn kbd{background:none;border-color:currentColor;color:inherit;opacity:.8}
+
+/* Calculator (Alt+C in an Amount field): a small box at the right of the screen */
+.calc{position:fixed;z-index:45;top:110px;right:24px;width:260px;background:var(--surface);border:1px solid var(--line-strong);border-radius:4px;box-shadow:0 10px 32px rgba(0,0,0,.25)}
+.calc .ct{background:var(--bar);color:var(--bar-ink);font-size:13px;font-weight:600;padding:6px 12px}
+.calc .cb{padding:10px 12px 12px}
+.calc .in{text-align:right;font-size:17px}
+.calc-out{text-align:right;font-size:20px;font-weight:500;min-height:32px;padding:6px 8px 0}
+.calc-out.bad{color:var(--bad)}

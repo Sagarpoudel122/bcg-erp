@@ -2,7 +2,8 @@
 /* Voucher entry. The same script serves contra.html, payment.html, receipt.html and journal.html;
    the page says which one in <body data-page="...">. Every voucher starts as plain Dr/Cr lines (Ctrl+H = Account layout). */
 const TYPE=document.body.dataset.page;
-// Where the cursor starts on a voucher: the Dr/Cr cell of the first line (the Account field in Account layout, which has no Dr/Cr cell)
+// A voucher opens on Bill No.; firstField is the first line's Dr/Cr cell (the Account field in Account layout, which has no Dr/Cr cell)
+const START='#vbill';
 const firstField=type=>draft(type).mode==='single'?'#L0-lid':'#L0-side';
 // Which ledgers a line may use. Account layout: the Account is cash/bank; Contra particulars are cash/bank, Payment/Receipt particulars are not.
 function lineRule(type,i){const single=draft(type).mode==='single';
@@ -41,42 +42,45 @@ function commitDate(t,quiet){const d=draft(S.view),r=parseDate(t.value,d.date);
 function vVoucher(type){
   const d=draft(type),T=TYPES[type],ev=d.editingId&&S.vouchers.find(v=>v.id===d.editingId),single=d.mode==='single';sync(d);
   const no=ev?vno(type,ev.seq,ev.pre):vno(type,S.counters[type]+1),s=serial(d.date.m,d.date.d);
-  const acc=single?d.lines[0]:null,accSub=acc&&acc.lid?lineSub(acc):'';
+  const B=balances(TODAY),acc=single?d.lines[0]:null,accSub=acc&&acc.lid?lineSub(acc,B):'';
   return tp(ev?'Accounting Voucher Alteration':'Accounting Voucher Creation',COMPANY,`
   <div class="tp-info"><span class="vt">${T.name}</span><span class="no">No. ${no}</span>
-   ${type==='payment'?`<span class="billno"><label for="vbill">Bill No.</label><input id="vbill" class="in" data-nav data-f="vbill" aria-label="Bill number" placeholder="Supplier bill no." value="${esc(d.billNo||'')}" autocomplete="off"></span>`:''}
+   <span class="billno"><label for="vbill">Bill No.</label><input id="vbill" class="in" data-nav data-f="vbill" aria-label="Bill number" placeholder="${type==='payment'?'Supplier bill no.':type==='receipt'?'Customer bill no.':'Bill no.'}" value="${esc(d.billNo||'')}" autocomplete="off"></span>
    <span class="date"><span class="hint" id="dhint">${dateHint(s)}</span><label class="sr" for="vdate">Date</label><input id="vdate" class="in" data-nav data-date data-f="vdate" aria-label="Voucher date, BS, yyyy-mm-dd" placeholder="yyyy-mm-dd" value="${bsText(s)}" autocomplete="off"></span></div>
+  <div class="lh ${single?'single':''}"><span></span><span>Particulars</span><span class="r">Debit</span><span class="r">Credit</span></div>
   ${single?`<div class="acct"><label class="lbl" for="L0-lid">Account</label>
     <input id="L0-lid" class="in lid" data-nav data-pick data-f="line" data-k="lid" data-i="0" aria-label="Account" placeholder="Cash or bank" value="${acc.lid?esc(led(acc.lid).name):''}" autocomplete="off">
-    <span class="acctamt num" id="acctamt" aria-label="Account total">${fmtIn(acc.amt)}</span>${accSub?`<div class="sub">${esc(accSub)}</div>`:''}</div>`:''}
-  <div class="lines ${single?'single':''}" role="group" aria-label="Voucher lines"><div class="lh"><span></span><span>Particulars</span><span class="r">Amount</span></div>${d.lines.map((ln,i)=>single&&i===0?'':lineHtml(d,ln,i)).join('')}</div>
+    <span class="acctamt num" id="acctamt" data-side="${acc.side}" aria-label="Account total">${fmtIn(acc.amt)}</span>${accSub?`<div class="sub">${esc(accSub)}</div>`:''}</div>`:''}
+  <div class="lines ${single?'single':''}" role="group" aria-label="Voucher lines">${d.lines.map((ln,i)=>single&&i===0?'':lineHtml(d,ln,i,B)).join('')}</div>
   <div class="totals" id="totals">${totalsHtml(d)}</div>
   <div class="narr"><label class="lbl" for="narr">Narration</label><input id="narr" class="in" data-nav data-f="narr" value="${esc(d.narr)}" autocomplete="off"></div>`)}
-function lineSub(ln){const p=[];const t=ln.inst;if(t&&t.no)p.push(`${t.type} ${t.no}${t.date?', '+t.date:''}`);
+const curBal=(lid,B)=>{const c=B[lid]?B[lid].cl:0;return `Cur Bal: ${fmt(Math.abs(c))}${c>0?' Dr':c<0?' Cr':''}`};
+function lineSub(ln,B){const p=[curBal(ln.lid,B)];const t=ln.inst;if(t&&t.no)p.push(`${t.type} ${t.no}${t.date?', '+t.date:''}`);
   for(const a of ln.alloc)if(cents(a.amt))p.push(`${TL[a.t]}${a.ref?' '+a.ref:''} ${fmt(cents(a.amt))}`);return p.join(' · ')}
-function lineHtml(d,ln,i){const l=ln.lid?led(ln.lid):null,sub=l?lineSub(ln):'',single=d.mode==='single';
-  return `<div class="line ${single?'single':''}" ${single?'':`data-side="${ln.side}"`}>
+function lineHtml(d,ln,i,B){const l=ln.lid?led(ln.lid):null,sub=l?lineSub(ln,B):'',single=d.mode==='single';
+  return `<div class="line ${single?'single':''}" data-side="${ln.side}">
    ${single?'':`<input id="L${i}-side" class="in side" data-nav data-f="line" data-k="side" data-i="${i}" readonly aria-label="Dr or Cr, line ${i+1}" value="${ln.side}">`}
    <input id="L${i}-lid" class="in lid" data-nav data-pick data-f="line" data-k="lid" data-i="${i}" aria-label="Ledger, line ${i+1}" placeholder="Ledger" value="${l?esc(l.name):''}" autocomplete="off">
    <input id="L${i}-amt" class="in amt" data-nav data-amt data-f="line" data-k="amt" data-i="${i}" inputmode="decimal" aria-label="Amount, line ${i+1}" placeholder="0.00" value="${fmtIn(ln.amt)}" autocomplete="off">
    ${sub?`<div class="sub">${esc(sub)}</div>`:''}</div>`}
 function totalsHtml(d){const{dr,cr}=totals(d);const ok=dr===cr&&dr>0;
-  if(d.mode==='single')return `<span>Total <b class="num">${fmt(d.lines.slice(1).reduce((a,l)=>a+cents(l.amt),0))}</b></span>`;
-  return `<span>Dr <b class="num dr">${fmt(dr)}</b></span><span>Cr <b class="num cr">${fmt(cr)}</b></span>${ok?'<span class="okc">✓</span>':dr||cr?`<span class="badc">Difference ${fmt(Math.abs(dr-cr))}</span>`:''}`}
+  return `<span class="tl">${ok?'<span class="okc">✓</span>':dr||cr?`<span class="badc">Difference ${fmt(Math.abs(dr-cr))}</span>`:''}</span><b class="num dr">${dr?fmt(dr):''}</b><b class="num cr">${cr?fmt(cr):''}</b>`}
+// Where the cursor starts on a line: its Dr/Cr cell (the ledger in the Account layout, which has none)
+const lineStart=(d,i)=>`#L${i}-${d.mode==='single'?'lid':'side'}`;
 function addLine(){const d=draft(S.view);
-  if(d.mode==='single'){d.lines.push(blankLine(ACC[d.type]==='Dr'?'Cr':'Dr'));render(`#L${d.lines.length-1}-lid`);return}
+  if(d.mode==='single'){d.lines.push(blankLine(ACC[d.type]==='Dr'?'Cr':'Dr'));render(lineStart(d,d.lines.length-1));return}
   const last=d.lines[d.lines.length-1];const{dr,cr}=totals(d);
   const ln=blankLine(dr>cr?'Cr':dr<cr?'Dr':(last?last.side:'Dr'));if(dr!==cr)ln.amt=(Math.abs(dr-cr)/100).toFixed(2);
-  d.lines.push(ln);render(`#L${d.lines.length-1}-lid`)}
+  d.lines.push(ln);render(lineStart(d,d.lines.length-1))}
 function delLine(){const d=draft(S.view),single=d.mode==='single';const i=Math.min(S.cur,d.lines.length-1);
   if(single&&i===0){say('The Account line cannot be deleted. Pick another ledger instead.','bad');return}
-  d.lines.splice(i,1);if(single?d.lines.length<2:!d.lines.length)d.lines.push(blankLine(single?(ACC[d.type]==='Dr'?'Cr':'Dr'):'Dr'));render(`#L${Math.min(i,d.lines.length-1)}-lid`)}
+  d.lines.splice(i,1);if(single?d.lines.length<2:!d.lines.length)d.lines.push(blankLine(single?(ACC[d.type]==='Dr'?'Cr':'Dr'):'Dr'));render(lineStart(d,Math.min(i,d.lines.length-1)))}
 function afterAmount(i,stage){const type=S.view,d=draft(type),ln=d.lines[i],l=led(ln.lid);
   if(stage<1&&isBankish(l)&&type!=='journal'&&!ln.inst.no&&!ln.inst.done){ln.inst.done=true;openPanel('inst',i,()=>afterAmount(i,1));return}
   if(stage<2&&l.billwise&&cents(ln.amt)>0){openPanel('alloc',i,()=>afterAmount(i,2));return}
   nextLine(i)}
 function nextLine(i){const d=draft(S.view);
-  if(i<d.lines.length-1){focusEl(`#L${i+1}-lid`);return}
+  if(i<d.lines.length-1){focusEl(lineStart(d,i+1));return}
   if(d.mode==='single'){addLine();return}
   const{dr,cr}=totals(d);if(dr===cr&&dr>0){focusEl('#narr');return}addLine()}
 function badTarget(d,c){const last=d.lines.length-1;
@@ -97,7 +101,7 @@ function save(){const type=S.view,d=draft(type);
     audit('Edited',v,old!==nw?`Amount ${old} → ${nw}`:'Details changed');S.drafts[type]=blank(type);S.db.date=v.date;flash(`${vno(type,v.seq,v.pre)} updated.`);navigate('daybook');return}
   const seq=++S.counters[type];const v={id:'v'+(++S.vid),type,seq,date,lines,narr:d.narr,billNo:d.billNo||'',status:'Active',by:USER,uid:UID,pre:TYPES[type].prefix};S.vouchers.push(v);audit('Created',v);
   S.lastVid=v.id;S.drafts[type]=blank(type);S.drafts[type].date={...d.date};sanitize();
-  render(firstField(type));say(`Saved as ${vno(type,seq)}.`,'ok')}
+  render(START);say(`Saved as ${vno(type,seq)}.`,'ok')}
 /* ---------- popups: bill details, cheque details, new ledger ---------- */
 function allocSumHtml(ln){const sum=ln.alloc.reduce((a,b)=>a+cents(b.amt),0),c=cents(ln.amt);return `<b class="${sum===c&&c>0?'okt':'badt'}">${fmt(sum)} of ${fmt(c)}</b>`}
 function panelAlloc(){const d=draft(S.view),ln=d.lines[P.i],l=led(ln.lid),s=serial(d.date.m,d.date.d);
@@ -123,7 +127,7 @@ function panelInst(){const ln=draft(S.view).lines[P.i],l=led(ln.lid),k=`data-nav
 function newLedgerHere(){const type=S.view;if(!TYPES[type])return;const d=draft(type),i=Math.min(S.cur,d.lines.length-1),t=document.activeElement;
   const typed=t&&t.dataset&&t.dataset.k==='lid'&&t.value!==curVal(t)?t.value.trim():'';
   const def={contra:'Bank Accounts',payment:'Indirect Expenses',receipt:'Sundry Debtors',journal:'Indirect Expenses'}[type];
-  S.nl={name:typed,code:'',group:d.mode==='single'&&i===0?'Bank Accounts':def,i};openPanel('newledger',i,restoreFocus)}
+  S.nl={name:typed,code:'',group:d.mode==='single'&&i===0?'Bank Accounts':def,i};openPanel('newledger',i,()=>focusEl(`#L${i}-lid`))}
 function panelNewLedger(){const n=S.nl,k='data-nav data-f="nl"';
   return `<h2>Ledger Creation</h2><div class="f"><label for="nl-name">Name</label><input id="nl-name" class="in" ${k} data-k="name" placeholder="English or नेपाली" value="${esc(n.name)}" autocomplete="off"></div>
    ${S.q.q3?`<div class="f"><label for="nl-code">Short code</label><input id="nl-code" class="in" ${k} data-k="code" value="${esc(n.code)}" autocomplete="off"></div>`:''}
@@ -199,11 +203,11 @@ PANELS.inst={view:panelInst,close(p){const ln=draft(S.view).lines[p.i];ln.inst.o
 PANELS.newledger={view:panelNewLedger,last:createNewLedger,accept:createNewLedger};
 
 start({
-  id:TYPE,title:TYPES[TYPE].name+' Voucher',view:()=>vVoucher(TYPE),focus:()=>firstField(TYPE),
+  id:TYPE,title:TYPES[TYPE].name+' Voucher',view:()=>vVoucher(TYPE),focus:()=>START,
   keys(){const v=TYPE,d=draft(v);const r=[{k:'F2',l:'Date',a:()=>focusEl('#vdate')},
     ...Object.keys(TYPES).filter(canSee).map(t=>({k:TYPES[t].key,l:TYPES[t].name,on:t===v,a:()=>go(t)})),{gap:1},
     {k:'Enter',l:'Next field'},{k:'Backspace',l:'Previous field'},{gap:1},
-    ...(can('ledger.create')?[{k:'Alt+C',l:'Create ledger',a:newLedgerHere}]:[]),{k:'Alt+L',l:'Add line',a:addLine},{k:'Ctrl+D',l:'Delete line',a:delLine}];
+    ...(can('ledger.create')?[{k:'Alt+C',l:'Create ledger',a:newLedgerHere}]:[]),{k:'Alt+C',kd:'Alt+C (Amount)',l:'Calculator',a:calcFromRail},{k:'Alt+L',l:'Add line',a:addLine},{k:'Ctrl+D',l:'Delete line',a:delLine}];
     if(ACC[v])r.push({k:'Ctrl+H',l:d.mode==='single'?'Dr/Cr mode':'Account mode',a:toggleMode});
     if(S.lastVid)r.push({k:'Alt+P',l:'Print last saved',a:()=>openPrint(S.lastVid)});
     r.push({gap:1},{k:'Ctrl+A',l:'Accept',a:trySave},escKey());return r},
