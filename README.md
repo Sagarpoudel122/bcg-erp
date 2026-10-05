@@ -1,6 +1,6 @@
 # BCG ERP prototype (multi-page)
 
-Open `index.html` in Chrome or Edge (double-click is enough, no install needed). It opens the **Sign in** page.
+Open `index.html` in Chrome or Edge (double-click is enough, no install needed). It opens the landing page; **Sign in** and **Get started** lead into the app.
 If your browser keeps data apart per file (Firefox does), serve the folder instead and open http://localhost:8765:
 
 ```bash
@@ -8,37 +8,39 @@ python -m http.server 8765 --directory prototypes/bcg-erp
 ```
 
 Every screen is its own HTML page. All pages share the same CSS and JavaScript. **localStorage is the database**: users,
-businesses, vouchers, employees and emails are all kept in the browser, so everything is still there after a reload.
+businesses, vouchers and employees are all kept in the browser, so everything is still there after a reload.
 
 ## Sign in, businesses and users
 
 ```
- Create account ──► verify email ──► Sign in ──► Select Business ──┬─► open a business ──► the app
- (Alt+N)           (link in the       (Ctrl+A)    (Alt+B anytime)   ├─► accept an invitation
-                    Mailbox)                                         └─► N  Business Registration ──► Business Setup
- Forgot password (Alt+F) ──► reset link in the Mailbox ──► new password (lifts a lock, signs out everywhere)
- Invitation email ──► Accept invitation: new person creates an account, existing person signs in ──► joins with the role given
+ Create account ──► Business Registration ──► Business Setup      (signed in at once: no email verification)
+ (Alt+N)             (Step 2 of 2)
+
+ Sign in ──► Select Business ──┬─► open a business ──► the app
+ (Ctrl+A)    (Alt+B anytime)   ├─► accept an invitation (shown here for your email)
+                               └─► N  Business Registration ──► Business Setup
+ Forgot password (Alt+F) ──► type your email ──► choose a new password (lifts a lock, signs out everywhere)
+ Invitation: the Owner invites an email in User Management; that person creates an account (or signs in) with that email and accepts on Select Business
 ```
 
-**Mailbox (prototype only).** There is no real email. Every email the app sends (verify, reset password, invitations,
-"you are now the Owner") lands on the **Mailbox** page, for every address. Enter opens an email, Enter again follows its link.
-Open it with Alt+M on the sign-in pages, or from the menu (Prototype → Mailbox).
+**Website touches.** Sign in, Create account, Forgot / Reset password, Business Registration and Select Business keep the app's look (green titled panel, underline fields, key rail, status bar) and add a few website habits (`auth:true` in `start()`, `authCard()` in `ui/form.js`): a one-line intro, real buttons and links in the panel (Sign in, Forgot password?, Create an account), a Show / Hide button on password fields, "Step n of 2" in the title strip, a Log out link in the header, and mistakes shown inside the panel instead of in a popup. The shortcuts are the same (Enter next field and submit on the last field, Ctrl+A, Alt+N, Alt+F, Esc).
 
-**Nothing is preset.** A new browser has no users, no businesses and no emails: no sample accounts to pick from, no sample
-ledgers, vouchers or employees. The first person creates an account (Alt+N on the Sign in page), opens the verification
-link in the Mailbox, signs in and registers a business. Every business starts with only the default ledgers (Cash,
+**No email.** There is no email verification, no Mailbox and no email of any kind in this prototype. Create account signs you in at once. Forgot password asks for your email and goes straight to choosing a new password (no emailed link, so anyone who knows an address can reset it: prototype only). An invitation is only a record: the invited address sees it on Select Business after signing in.
+
+**Nothing is preset.** A new browser has no users, no businesses: no sample accounts to pick from, no sample
+ledgers, vouchers or employees. The first person creates an account (Alt+N on the Sign in page) and registers a business. Every business starts with only the default ledgers (Cash,
 Profit & Loss, VAT, TDS Payable, Sales, Purchase), no vouchers and no employees. A browser that still holds the old sample data
 (Sample Traders, Himal Hardware and the `@sample.test` users) loses just those records the next time it opens the prototype;
 accounts and businesses made by hand stay.
 
 | Screen | What it does |
 |---|---|
-| **Sign in** | 5 wrong passwords lock the account for 15 minutes. An unverified email cannot sign in (it offers to resend the link). |
-| **Create account** | name, email, mobile (optional), password twice. Password rule: at least 8 characters, nothing else. Open self sign-up (B1 is still open). |
-| **Select Business** | your businesses and role in each, invitations waiting for your email (Enter accepts), businesses you deleted (Enter restores, 30 days). N registers a new business. |
-| **Business Registration** | required: name, address, phone, books-beginning date (BS). Optional: type, email, PAN (9 digits), VAT registered (needs PAN). A PAN already used by one of your businesses asks first. You become the Owner. |
+| **Sign in** | The panel with email and password (with a Show button), "Forgot password?" and "Create an account" links. 5 wrong passwords lock the account for 15 minutes. |
+| **Create account** | Step 1 of 2 (Account, Business). Full name, email, password (8+ characters, nothing else) and **Confirm password**. No email verification: you are signed in at once and go on to Business Registration (or Select Business when an invitation is waiting for that email). Mobile can be added later in My Account. Open self sign-up (B1 is still open). |
+| **Select Business** | your businesses and role in each, invitations waiting for your email (Enter accepts; this is the only way to accept one, there are no invitation emails), businesses you deleted (Enter restores, 30 days). N registers a new business. |
+| **Business Registration** | Step 2 of 2. Every field is required (red *) except **Phone**: business name, business type, address, business email, books start date (BS), PAN (9 digits) and VAT registered (click or Space; default No). A PAN already used by one of your businesses asks first. You become the Owner. |
 | **Business Setup** | Business (name, type, address, phone, email) · Branding (logo: Space picks a picture, Delete removes; logo on prints Y/N; two brand colours) · Tax (PAN, VAT, VAT rate) · Books (FY, books beginning, **lock books up to**: Owner only) · Voucher numbering (prefix per type; a saved voucher keeps its prefix). Shows "% complete" of the optional items. Admin edits, Accountant / Manager / Viewer see it read-only. **Alt+D** deletes the business (Owner; restorable 30 days). |
-| **User Management** | N invite (email, name, role, linked employee; valid 7 days) · Enter change role / employee link · D deactivate (or cancel an invitation) · R reactivate (or send an invitation again) · **Alt+O** make another Admin the Owner (Owner only). You cannot change or deactivate yourself or the Owner. |
+| **User Management** | N invite (email, name, role, linked employee; valid 7 days) · Enter change role / employee link · D deactivate (or cancel an invitation) · R reactivate (or renew an invitation) · **Alt+O** make another Admin the Owner (Owner only). You cannot change or deactivate yourself or the Owner. |
 | **My Account** | name, mobile, **show dates in BS or AD** (for you only) · Alt+W change password (signs out your other devices) · Alt+O log out on all devices · your last sign-ins. |
 
 What the business settings change elsewhere: the business name, address, PAN, phone and logo head every print; the lock
@@ -108,8 +110,8 @@ the menu, Go To and the F-keys only offer what your role allows.
 bcg-erp/
   index.html                 opens pages/login.html
   pages/                     one small HTML file per screen (no logic inside)
-    login / signup / verify-email / forgot-password / reset-password / accept-invite .html
-    select-business.html  business-register.html  mailbox.html            (no menu: the panel in the middle)
+    login / signup / forgot-password / reset-password .html
+    select-business.html  business-register.html                              (no menu: the panel in the middle)
     business-setup.html  users.html  my-account.html                       (Company, inside the app)
     home.html                Dashboard (the Account gateway)
     group-list.html  group-form.html               groups (address ?g=<group> alters one)
@@ -143,7 +145,7 @@ Business Tools  one screen for now, the list of tools is decided later
 
 | Who | HRM screens |
 |---|---|
-| Admin, Manager | **Create Employee** (name, designation, joining date, phone, monthly salary, and optionally a login email that sends an Employee invitation) · **Employee List** (Enter alters, N creates; the Login column shows who can sign in) · **Approve Leave** (Enter opens the request; A approve or R reject with a remark) · **Salary Spends** (month by month; Y pays the month; Enter opens one employee's salary detail) |
+| Admin, Manager | **Create Employee** (name, designation, joining date, phone, monthly salary, and optionally a login email: that address is invited as an Employee and accepts on Select Business) · **Employee List** (Enter alters, N creates; the Login column shows who can sign in) · **Approve Leave** (Enter opens the request; A approve or R reject with a remark) · **Salary Spends** (month by month; Y pays the month; Enter opens one employee's salary detail) |
 | Linked to an employee | **Attendance** (I punch in, O punch out) · **Leave** (N apply, list with status) · **Salary** (one row per paid month, Enter for the detail) |
 
 Sample rules (change them in `core/hrm.js`): Saturday is the weekly off; a past working day with no punch counts as absent; absent and unpaid-leave days are deducted at salary / days in the month; leave per year is Annual 18, Sick 12, Casual 6, plus Unpaid. Paying a month saves the figures and (switch **H1** on the Options page) posts one Payment voucher in Account (Dr Salary / Cr NIC Asia bank) when the business has ledgers with those ids; a new business has neither, so paying only marks the month paid.
@@ -170,7 +172,7 @@ Screens register what they own instead of the shell knowing about every screen:
 
 - `FIELD[data-f]` in `ui/fields.js`: key, Enter, input, amount and date handling of a field
 - `PICK[data-f]` in `ui/picker.js`: the type-to-search lists
-- `PANELS[kind]` in `ui/popups.js`: detail popups (bill details, cheque details, new ledger, change period, Go To, invite user, change password, an email)
+- `PANELS[kind]` in `ui/popups.js`: detail popups (bill details, cheque details, new ledger, change period, Go To, invite user, change password)
 - `form({...})` in `ui/form.js`: a whole Tally-style form from a list of fields (text, password, pick list, Y/N, colour, picture, read-only); the sign-in, business and user screens use it
 
 Page scripts must not read `CUR.biz` or `CUR.user` at load time (do it in `init()`): the shell decides only in `start()`
@@ -186,11 +188,11 @@ whether the page may open at all.
 
 | Key | What |
 |---|---|
-| `bcg.db` | the platform tables (`core/db.js`): users, businesses, members (role, Owner flag, employee link, status), invites, one-time links, emails, sessions, sign-in log |
+| `bcg.db` | the platform tables (`core/db.js`): users, businesses, members (role, Owner flag, employee link, status), invites, sessions, sign-in log |
 | `bcg.session` | the sign-in on this browser (ends after 7 days unused, on log out, or on "log out all devices") |
 | `bcg.biz.<business>` | one business's data, shared by its users: custom groups and renames, ledgers, vouchers, audit log, options, employees, attendance, leave, salary |
 | `bcg.ui.<business>.<user>` | where one user left the screens in that business: drafts, Day Book position, dashboard period, menu part |
-| `bcg.flash` | a message for the next page (for example "Email verified") |
+| `bcg.flash` | a message for the next page (for example "Password changed") |
 
 Businesses never see each other's data. Passwords are hashed, but nothing here is secure: it is a prototype in the browser.
 **Alt+R on the Options page** erases the whole prototype (all users, businesses and data) and signs you out; it starts empty again.

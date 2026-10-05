@@ -44,6 +44,7 @@ function vVoucher(type){
   const acc=single?d.lines[0]:null,accSub=acc&&acc.lid?lineSub(acc):'';
   return tp(ev?'Accounting Voucher Alteration':'Accounting Voucher Creation',COMPANY,`
   <div class="tp-info"><span class="vt">${T.name}</span><span class="no">No. ${no}</span>
+   ${type==='payment'?`<span class="billno"><label for="vbill">Bill No.</label><input id="vbill" class="in" data-nav data-f="vbill" aria-label="Bill number" placeholder="Supplier bill no." value="${esc(d.billNo||'')}" autocomplete="off"></span>`:''}
    <span class="date"><span class="hint" id="dhint">${dateHint(s)}</span><label class="sr" for="vdate">Date</label><input id="vdate" class="in" data-nav data-date data-f="vdate" aria-label="Voucher date, BS, yyyy-mm-dd" placeholder="yyyy-mm-dd" value="${bsText(s)}" autocomplete="off"></span></div>
   ${single?`<div class="acct"><label class="lbl" for="L0-lid">Account</label>
     <input id="L0-lid" class="in lid" data-nav data-pick data-f="line" data-k="lid" data-i="0" aria-label="Account" placeholder="Cash or bank" value="${acc.lid?esc(led(acc.lid).name):''}" autocomplete="off">
@@ -92,9 +93,9 @@ function trySave(){const type=S.view;if(!TYPES[type])return;const d=draft(type);
 function save(){const type=S.view,d=draft(type);
   sync(d);const lines=clone(d.lines.filter(l=>l.lid&&cents(l.amt)>0)).sort((a,b)=>(a.side==='Dr'?0:1)-(b.side==='Dr'?0:1));const date=serial(d.date.m,d.date.d);
   if(d.editingId){const v=S.vouchers.find(x=>x.id===d.editingId);const old=fmt(v.lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0));
-    Object.assign(v,{date,lines,narr:d.narr});const nw=fmt(lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0));
+    Object.assign(v,{date,lines,narr:d.narr,billNo:d.billNo||''});const nw=fmt(lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0));
     audit('Edited',v,old!==nw?`Amount ${old} → ${nw}`:'Details changed');S.drafts[type]=blank(type);S.db.date=v.date;flash(`${vno(type,v.seq,v.pre)} updated.`);navigate('daybook');return}
-  const seq=++S.counters[type];const v={id:'v'+(++S.vid),type,seq,date,lines,narr:d.narr,status:'Active',by:USER,uid:UID,pre:TYPES[type].prefix};S.vouchers.push(v);audit('Created',v);
+  const seq=++S.counters[type];const v={id:'v'+(++S.vid),type,seq,date,lines,narr:d.narr,billNo:d.billNo||'',status:'Active',by:USER,uid:UID,pre:TYPES[type].prefix};S.vouchers.push(v);audit('Created',v);
   S.lastVid=v.id;S.drafts[type]=blank(type);S.drafts[type].date={...d.date};sanitize();
   render(firstField(type));say(`Saved as ${vno(type,seq)}.`,'ok')}
 /* ---------- popups: bill details, cheque details, new ledger ---------- */
@@ -136,6 +137,7 @@ function createNewLedger(){const n=S.nl,name=n.name.trim();
   const i=n.i;P.then=null;closePanel();setLineLedger(i,id);say(`Ledger "${name}" created and selected.`,'ok')}
 /* ---------- registrations ---------- */
 FIELD.vdate={date:()=>serial(draft(S.view).date.m,draft(S.view).date.d),enter:t=>{if(commitDate(t))moveFocus(t,1)},blur:t=>commitDate(t,true)};
+FIELD.vbill={enter:t=>{draft(S.view).billNo=t.value.trim();moveFocus(t,1)},input:t=>{draft(S.view).billNo=t.value}};
 FIELD.narr={enter:()=>ask('Accept?',trySave),input:t=>{draft(S.view).narr=t.value}};
 FIELD.line={
   focus:t=>{S.cur=+t.dataset.i},

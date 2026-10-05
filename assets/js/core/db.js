@@ -1,8 +1,9 @@
 /* The prototype's "server", kept in the browser: localStorage is the database (key bcg.db).
-   Tables: users, businesses, members (who works in which business, with which role), invites, tokens (one-time links:
-   verify email, reset password), mails (every email the app sends; read them on the Mailbox page), sessions, logins.
+   Tables: users, businesses, members (who works in which business, with which role), invites, sessions, logins.
+   There are no emails in this prototype: no email verification, no reset links, no invitation emails (an invited person signs in
+   with the invited address and accepts the invitation on Select Business).
    Each business's own data (ledgers, vouchers, HRM) is kept apart under bcg.biz.<id> by core/store.js.
-   Prototype only: the real app does all of this in Django (JWT sign-in, PBKDF2 password hashes, emails through Amazon SES). */
+   Prototype only: the real app does all of this in Django (JWT sign-in, PBKDF2 password hashes). */
 
 /* ---------- storage ---------- */
 const LS={
@@ -13,7 +14,7 @@ const LS={
   // Fallback when the browser blocks localStorage for files opened from disk: the tab's window.name carries the data between pages
   wn(){try{if(window.name.indexOf('bcg2:')===0)return JSON.parse(window.name.slice(5))}catch(e){}return{}},
   wnSave(m){try{window.name='bcg2:'+JSON.stringify(m)}catch(e){}}};
-// A message for the next page, for example "Email verified" on the sign-in page
+// A message for the next page, for example "Password changed" on the sign-in page
 const flash=(text,kind='ok')=>LS.set('bcg.flash',{text,kind});
 function takeFlash(){const f=LS.get('bcg.flash');if(f)LS.del('bcg.flash');return f}
 
@@ -38,7 +39,7 @@ const pwProblem=pw=>String(pw||'').length<8?'The password needs at least 8 chara
 /* ---------- the database ---------- */
 const DB={
   KEY:'bcg.db',d:null,
-  load(){let d=LS.get(this.KEY);if(!d||(d.v!==2&&d.v!==DB_VERSION))d=emptyDB();else if(d.v===2)d=dropSamples(d);this.d=d;this.purge();this.save()},
+  load(){let d=LS.get(this.KEY);if(!d||(d.v!==2&&d.v!==DB_VERSION))d=emptyDB();else if(d.v===2)d=dropSamples(d);delete d.mails;delete d.tokens;this.d=d;this.purge();this.save()},
   save(){LS.set(this.KEY,this.d)},
   nid(p){return p+(++this.d.seq)},
   user:id=>DB.d.users.find(u=>u.id===id)||null,
@@ -52,22 +53,10 @@ const DB={
   // Deleted businesses this user owns, still inside the 30 days they can be restored
   deletedList:uid=>DB.d.members.filter(m=>m.user===uid&&m.owner).map(m=>({m,b:DB.biz(m.biz)})).filter(x=>x.b&&x.b.deleted),
 
-  /* emails: kept in the Mailbox page instead of being sent */
-  mail(to,subject,body,link){this.d.mails.push({id:this.nid('mail'),to:normEmail(to),subject,body,link:link||null,at:now(),read:false})},
-
   /* accounts */
-  createUser({name,email,phone,pw,verified}){const id=this.nid('u');
-    const u={id,name:name.trim(),email:normEmail(email),phone:String(phone||'').trim(),pw:hashPw(pw,id),verified:!!verified,created:now(),failed:0,lockUntil:0,date:'BS'};
+  createUser({name,email,phone,pw}){const id=this.nid('u');
+    const u={id,name:name.trim(),email:normEmail(email),phone:String(phone||'').trim(),pw:hashPw(pw,id),created:now(),failed:0,lockUntil:0,date:'BS'};
     this.d.users.push(u);this.save();return u},
-  oneTime(kind,uid,ms){const t={token:newToken(),kind,user:uid,expires:now()+ms,used:false};this.d.tokens.push(t);return t.token},
-  // The link of a token if it can still be used, otherwise why not
-  token(t,kind){const r=this.d.tokens.find(x=>x.token===t&&x.kind===kind);
-    if(!r)return{why:'This link is not valid. Check that you opened the whole link from the email.'};
-    if(r.used)return{why:'This link was already used.',r};
-    if(r.expires<now())return{why:'This link has expired.',r};return{r}},
-  sendVerify(u){const t=this.oneTime('verify',u.id,DAY);
-    this.mail(u.email,'Verify your email for BCG ERP',[`Hi ${u.name},`,'Confirm that this is your email address to finish creating your BCG ERP account. The link works for 24 hours.'],{label:'Verify email',href:`verify-email.html?t=${t}`});this.save()},
-  verifyEmail(t){const x=this.token(t,'verify');if(!x.r||x.why)return x;x.r.used=true;const u=this.user(x.r.user);if(u)u.verified=true;this.save();return{user:u}},
   // Sign in. Five wrong passwords in a row lock the account for 15 minutes.
   login(email,pw){const u=this.userByEmail(email),log=(ok,why)=>{this.d.logins.push({user:u?u.id:'',email:normEmail(email),at:now(),ok,why});this.d.logins=this.d.logins.slice(-300)};
     const fail=(msg,o={})=>{log(false,o.why||msg);this.save();return Object.assign({ok:false,msg},o)};
@@ -76,14 +65,10 @@ const DB={
     if(u.pw!==hashPw(pw,u.id)){u.failed=(u.failed||0)+1;
       if(u.failed>=5){u.failed=0;u.lockUntil=now()+15*6e4;return fail('Five wrong passwords: the account is locked for 15 minutes. You can reset the password (Alt+F).',{why:'Wrong password, locked'})}
       return fail(`The email or password is wrong. ${5-u.failed} more ${5-u.failed===1?'try':'tries'} before a 15-minute lock.`,{field:'pw',why:'Wrong password'})}
-    if(!u.verified)return fail('Verify your email first.',{unverified:true,user:u,why:'Email not verified'});
     u.failed=0;u.lockUntil=0;log(true,'');this.startSession(u.id);return{ok:true,user:u}},
-  requestReset(email){const u=this.userByEmail(email);if(!u)return;const t=this.oneTime('reset',u.id,36e5);
-    this.mail(u.email,'Reset your BCG ERP password',[`Hi ${u.name},`,'Someone asked to reset the password of your BCG ERP account. The link works for 1 hour. If it was not you, ignore this email: your password stays the same.'],{label:'Reset password',href:`reset-password.html?t=${t}`});this.save()},
-  setPassword(u,pw){u.pw=hashPw(pw,u.id);u.failed=0;u.lockUntil=0;
-    this.mail(u.email,'Your BCG ERP password was changed',[`Hi ${u.name},`,'The password of your BCG ERP account was just changed and you were signed out on your other devices. If it was not you, reset the password now and tell your Owner.'])},
-  resetPassword(t,pw){const x=this.token(t,'reset');if(!x.r||x.why)return x;x.r.used=true;const u=this.user(x.r.user);
-    this.setPassword(u,pw);u.verified=true;this.d.sessions=this.d.sessions.filter(s=>s.user!==u.id);this.save();return{user:u}},
+  setPassword(u,pw){u.pw=hashPw(pw,u.id);u.failed=0;u.lockUntil=0},
+  // Forgot password (prototype: no email, the page goes straight to choosing a new one). Lifts a lock and signs the account out everywhere.
+  resetPassword(u,pw){this.setPassword(u,pw);this.d.sessions=this.d.sessions.filter(s=>s.user!==u.id);this.save()},
 
   /* sessions: one per browser sign-in; the token is kept in localStorage (bcg.session). They end after 7 days without use. */
   startSession(uid,biz){const s={token:newToken(),user:uid,biz:biz||'',at:now(),seen:now(),agent:navigator.userAgent.includes('Edg')?'Edge':navigator.userAgent.includes('Firefox')?'Firefox':navigator.userAgent.includes('Chrome')?'Chrome':'Browser'};
@@ -102,20 +87,18 @@ const DB={
       books:f.books,logo:'',printLogo:true,c1:'',c2:'',prefix:{contra:'CTR',payment:'PMT',receipt:'RCT',journal:'JRN'},lockTo:null,created:now(),deleted:0};
     this.d.businesses.push(b);this.d.members.push({id:this.nid('m'),biz:id,user:uid,role:'admin',owner:true,emp:'',status:'Active',since:now()});this.save();return b},
 
-  /* invitations: an email link, valid 7 days */
+  /* invitations: valid 7 days; the invited address sees them on Select Business after signing in */
   inviteState(i){return i.status==='Pending'&&i.expires<now()?'Expired':i.status},
-  invite({biz,email,name,role,emp,by}){const b=this.biz(biz),from=this.user(by);
-    const i={id:this.nid('inv'),token:newToken(),biz,email:normEmail(email),name:(name||'').trim(),role,emp:emp||'',by,sent:now(),expires:now()+7*DAY,status:'Pending'};
-    this.d.invites.push(i);this.inviteMail(i,b,from);this.save();return i},
-  inviteMail(i,b,from){this.mail(i.email,`${from?from.name:'Someone'} invited you to ${b.name} on BCG ERP`,
-    [`Hi${i.name?' '+i.name:''},`,`${from?from.name:'Someone'} invited you to join ${b.name} on BCG ERP as ${ROLES[i.role]}.`,'The invitation is valid for 7 days.'],{label:'Accept invitation',href:`accept-invite.html?t=${i.token}`})},
-  resendInvite(i){i.token=newToken();i.sent=now();i.expires=now()+7*DAY;i.status='Pending';this.inviteMail(i,this.biz(i.biz),this.user(CUR.user?CUR.user.id:i.by));this.save()},
+  invite({biz,email,name,role,emp,by}){
+    const i={id:this.nid('inv'),biz,email:normEmail(email),name:(name||'').trim(),role,emp:emp||'',by,sent:now(),expires:now()+7*DAY,status:'Pending'};
+    this.d.invites.push(i);this.save();return i},
+  resendInvite(i){i.sent=now();i.expires=now()+7*DAY;i.status='Pending';this.save()},
   // Why an email cannot be invited to a business ('' when it can)
   inviteProblem(bid,email){email=normEmail(email);if(!isEmail(email))return'Type a valid email address.';
     const u=this.userByEmail(email),m=u&&this.member(u.id,bid);
     if(m&&m.status==='Active')return`${u.name} is already a user of this business.`;
     if(m)return`${u.name} was deactivated. Select them in User Management and press R to reactivate.`;
-    if(this.d.invites.some(i=>i.biz===bid&&i.email===email&&i.status==='Pending'))return'This email already has an invitation. Send it again from User Management (R).';
+    if(this.d.invites.some(i=>i.biz===bid&&i.email===email&&i.status==='Pending'))return'This email already has an invitation. Renew it from User Management (R).';
     return''},
   invitesFor:email=>DB.d.invites.filter(i=>i.email===normEmail(email)&&DB.inviteState(i)==='Pending'&&DB.biz(i.biz)&&!DB.biz(i.biz).deleted),
   acceptInvite(i,uid){let m=this.member(uid,i.biz);
@@ -123,11 +106,10 @@ const DB={
     else{m={id:this.nid('m'),biz:i.biz,user:uid,role:i.role,owner:false,emp:i.emp,status:'Active',since:now()};this.d.members.push(m)}
     i.status='Accepted';i.accepted=now();this.save();bizAudit(i.biz,this.user(uid),'Joined',`Accepted the invitation as ${ROLES[i.role]}`);return m},
 
-  // Deleted businesses are kept 30 days, then removed with all their data. Old one-time links are dropped.
+  // Deleted businesses are kept 30 days, then removed with all their data.
   purge(){const gone=this.d.businesses.filter(b=>b.deleted&&now()-b.deleted>30*DAY).map(b=>b.id);
     if(gone.length){this.d.businesses=this.d.businesses.filter(b=>!gone.includes(b.id));this.d.members=this.d.members.filter(m=>!gone.includes(m.biz));
-      this.d.invites=this.d.invites.filter(i=>!gone.includes(i.biz));LS.keys().filter(k=>gone.some(id=>k==='bcg.biz.'+id||k.startsWith(`bcg.ui.${id}.`))).forEach(k=>LS.del(k))}
-    this.d.tokens=this.d.tokens.filter(t=>now()-t.expires<30*DAY)}
+      this.d.invites=this.d.invites.filter(i=>!gone.includes(i.biz));LS.keys().filter(k=>gone.some(id=>k==='bcg.biz.'+id||k.startsWith(`bcg.ui.${id}.`))).forEach(k=>LS.del(k))}}
 };
 // Write an entry into a business's audit log from a page that does not have the business open (for example accepting an invitation)
 function bizAudit(bid,u,action,detail){const k='bcg.biz.'+bid,b=LS.get(k);if(!b)return;
@@ -138,9 +120,9 @@ function resetAll(){if(typeof Store!=='undefined')Store.ready=false;
   location.href='login.html'}
 
 /* ---------- the first time: nothing in it ---------- */
-// No users, businesses or emails. The first person creates an account (Create account), then registers a business.
+// No users or businesses. The first person creates an account (Create account), then registers a business.
 const DB_VERSION=3;
-const emptyDB=()=>({v:DB_VERSION,seq:100,users:[],businesses:[],members:[],invites:[],tokens:[],mails:[],sessions:[],logins:[]});
+const emptyDB=()=>({v:DB_VERSION,seq:100,users:[],businesses:[],members:[],invites:[],sessions:[],logins:[]});
 // A browser that still holds the earlier sample data (version 2: the @sample.test users and the businesses b1 and b2) loses only those
 // records. Accounts and businesses made by hand stay.
 function dropSamples(d){
@@ -148,8 +130,7 @@ function dropSamples(d){
   d.users=d.users.filter(u=>!us.has(u.id));d.businesses=d.businesses.filter(b=>!bs.has(b.id));
   d.members=d.members.filter(m=>!us.has(m.user)&&!bs.has(m.biz));
   d.invites=d.invites.filter(i=>!bs.has(i.biz)&&!i.email.endsWith('@sample.test'));
-  d.mails=d.mails.filter(m=>!m.to.endsWith('@sample.test'));
-  d.tokens=d.tokens.filter(t=>!us.has(t.user));d.sessions=d.sessions.filter(s=>!us.has(s.user));d.logins=d.logins.filter(l=>!us.has(l.user));
+  d.sessions=d.sessions.filter(s=>!us.has(s.user));d.logins=d.logins.filter(l=>!us.has(l.user));
   LS.keys().filter(k=>[...bs].some(id=>k==='bcg.biz.'+id||k.startsWith(`bcg.ui.${id}.`))).forEach(k=>LS.del(k));
   LS.del('bcg-erp-prototype-v1');d.v=DB_VERSION;return d}
 

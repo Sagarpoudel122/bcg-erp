@@ -31,7 +31,7 @@ function saveSetup(){if(!canEdit()){say('Only an Admin can change the business s
   const v=ST.v,t=k=>String(v[k]||'').trim();
   if(!t('name'))return fmBad(ST,'name','Type the business name.');
   if(!t('address'))return fmBad(ST,'address','Type the address.');
-  if(!isPhone(v.phone))return fmBad(ST,'phone','Type the phone number.');
+  if(t('phone')&&!isPhone(v.phone))return fmBad(ST,'phone','Type the phone number with digits only, or leave it empty.');
   if(t('email')&&!isEmail(v.email))return fmBad(ST,'email','Type a valid email address, or leave it empty.');
   for(const k of ['c1','c2','pan']){const m=(k==='pan'?panProblem:hexProblem)(v[k]);if(m)return fmBad(ST,k,m)}
   if(v.vat&&!t('pan'))return fmBad(ST,'pan','A VAT registered business needs its PAN (the VAT number is the PAN).');

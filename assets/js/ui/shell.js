@@ -8,6 +8,8 @@
      init()    before the first draw (read the page address; false = stop, it moved on)    ready()  after the first draw
      state     list state ({sel}) so a mouse click can select a row; activate() runs on that click
      bare      true for the sign-in and business pages: no menu, the panel in the middle
+     auth      true for the sign-in / create account / business registration pages: the usual titled panel (authCard in ui/form.js)
+               with a few website touches (buttons and links in the panel, mistakes shown inside it, header with a Log out link)
      access    'public' (no sign-in needed), 'guest' (public, and a signed-in user is sent on), 'user' (signed in, no business needed);
                by default a page needs a signed-in user with an open business who may see the screen (SCREEN in ui/nav.js) */
 let PAGE=null;
@@ -23,6 +25,7 @@ function render(focus){
 }
 /* ---------- top bar: the parts of the product this user may open, the business (Alt+B), the user (My Account) ---------- */
 function drawTop(){const t=document.querySelector('.top');if(!t)return;
+  if(PAGE.auth){t.innerHTML=`<a class="brand" href="../index.html">BCG ERP</a>${CUR.user?`<span class="who">${esc(CUR.user.email)}</span><button type="button" class="link" data-act="logout">Log out</button>`:''}`;return}
   if(PAGE.bare){t.innerHTML=`<b>BCG ERP</b>${CUR.user?`<span class="user" style="margin-left:auto">${esc(CUR.user.email)}</span>`:''}`;return}
   const parts=myParts(),tab=m=>`<button tabindex="-1" data-act="mod" data-m="${m}" class="${S.mod===m?'on':''}" ${S.mod===m?'aria-current="true"':''}>${MODNAME[m]}<kbd>Alt+${['acc','hrm','tools'].indexOf(m)+1}</kbd></button>`;
   const mods=parts.length>1?`<nav class="mods" aria-label="Parts">${parts.map(tab).join('')}</nav>`:'';
@@ -110,6 +113,8 @@ document.addEventListener('click',e=>{
   if(b){const a=b.dataset.act;
     if(a==='key'){const x=S.rail[+b.dataset.i];if(x&&x.a)x.a()}
     else if(a==='nav')go(NAVI[+b.dataset.i].go);else if(a==='mod')goMod(b.dataset.m);else if(a==='biz')go('selbiz');else if(a==='account')go('account');
+    else if(a==='rk'){const x=S.rail.find(r=>r.k===b.dataset.key);if(x&&x.a)x.a()}   // a button on an auth card runs the key-rail entry of that name
+    else if(a==='logout')logOut();else if(a==='pwtoggle'){const i=b.parentElement.querySelector('input');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'}
     else if(a==='yes')answer(true);else if(a==='no')answer(false);else if(a==='closeprint')closePrint();else if(a==='closealert')closeAlert();return}
   const row=e.target.closest('main .row[data-i],main tr[data-i],main td[data-i],main .dt[data-i]');
   if(row&&PAGE.state){S.sb=false;PAGE.state.sel=+row.dataset.i;if(PAGE.activate)PAGE.activate();else render()}});
@@ -134,7 +139,7 @@ function afterSignIn(uid,next){const list=DB.bizList(uid),u=DB.user(uid);next=sa
 function start(page){
   PAGE=page;
   const to=gate(page);if(to){location.replace(to);return}
-  document.body.classList.toggle('bare',!!page.bare);
+  document.body.classList.toggle('bare',!!page.bare);document.body.classList.toggle('auth',!!page.auth);
   if(!page.bare){
     if(!Store.load())freshBusiness()
     rebuildGroups();if(!GM[S.lf.group])S.lf.group='Sundry Debtors';   // custom groups of this business; a draft may point at a deleted one

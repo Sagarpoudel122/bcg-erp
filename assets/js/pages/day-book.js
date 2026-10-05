@@ -6,7 +6,7 @@ function vDay(){const D=S.db;
   const rows=D.list.map((v,i)=>{const dr=v.lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0);
     const drl=v.lines.filter(l=>l.side==='Dr'),crl=v.lines.filter(l=>l.side==='Cr');const can=v.status==='Cancelled';
     return `<tr class="${can?'cancelled':''} ${i===D.sel?'sel':''}" data-i="${i}"><td class="num">${bsShort(v.date)}</td>
-     <td><span class="strike">${esc(led(drl[0].lid).name)}${drl.length>1?' …':''} <span class="muted">to</span> ${esc(led(crl[0].lid).name)}${crl.length>1?' …':''}</span>${v.narr?`<br><small class="muted">${esc(v.narr)}</small>`:''}</td>
+     <td><span class="strike">${esc(led(drl[0].lid).name)}${drl.length>1?' …':''} <span class="muted">to</span> ${esc(led(crl[0].lid).name)}${crl.length>1?' …':''}</span>${v.billNo?`<br><small class="muted">Bill No. ${esc(v.billNo)}</small>`:''}${v.narr?`<br><small class="muted">${esc(v.narr)}</small>`:''}</td>
      <td>${TYPES[v.type].name}</td><td class="num">${vno(v.type,v.seq,v.pre)}</td>
      <td class="r num">${can?'0.00':fmt(dr)}</td><td>${can?'<span class="tag warn">Cancelled</span>':''}</td></tr>`}).join('');
   return tp(ownOnly()?'Day Book · My vouchers':'Day Book',D.all?'All days':bsText(D.date),

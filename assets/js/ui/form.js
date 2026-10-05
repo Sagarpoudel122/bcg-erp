@@ -3,6 +3,7 @@
    Field: {k, l (label), ph (placeholder), type, sec (heading shown above), when() shown only when true, ro() read-only when true,
            items() for pick lists ({v,label,sub}), title (list title), hint (shown in the status bar while the field has the cursor),
            check(value) a message when the value is wrong (checked on Enter), change() after a list pick or Y/N change (the form is redrawn)}
+   Also: req (a red * after the label, for a required field), help (a line shown under the field), toggle (password field with a Show / Hide button).
    Types: 'text' (default), 'password', 'pick', 'yn' (Y / N / Space), 'color' (#RRGGBB with a swatch), 'file' (picture: Space choose, Delete remove), 'ro'.
    Enter moves to the next field; Enter on the last one calls last() (default: "Accept?" then accept()). Ctrl+A is the page's accept key. */
 const FORMS={};
@@ -18,8 +19,9 @@ function formHtml(fm){
     const shown=f.type==='yn'?(v?'Yes':'No'):f.type==='pick'?pickLabel(f,v):f.type==='file'?(v?'Picture added':''):(v??'');
     const extra=f.type==='color'?`<span class="swatch" id="${id}-sw" style="background:${validHex(v)?v:'transparent'}"></span>`
       :f.type==='file'&&v?`<img class="logo-prev" src="${esc(v)}" alt="">`:'';
-    return `${f.sec?`<h4 class="fsec">${esc(f.sec)}</h4>`:''}<div class="f"><label for="${id}">${esc(f.l)}</label><div class="fin">`+
-      `<input id="${id}" class="in" type="${f.type==='password'?'password':'text'}" data-nav data-f="fm" data-form="${fm.id}" data-k="${f.k}" ${f.type==='pick'&&!ro?'data-pick':''} ${ro||f.type==='yn'||f.type==='file'?'readonly':''} placeholder="${esc(ro?'':f.ph||'')}" value="${esc(shown)}" autocomplete="${f.ac||'off'}">${extra}</div></div>`}).join('')}
+    const tg=f.toggle&&f.type==='password'?'<button type="button" class="pw-toggle" tabindex="-1" data-act="pwtoggle" aria-label="Show or hide the password">Show</button>':'';
+    return `${f.sec?`<h4 class="fsec">${esc(f.sec)}</h4>`:''}<div class="f"><label for="${id}">${esc(f.l)}${f.req?'<span class="req" aria-hidden="true">*</span>':''}</label><div class="fin${tg?' pw':''}">`+
+      `<input id="${id}" class="in" type="${f.type==='password'?'password':'text'}" data-nav data-f="fm" data-form="${fm.id}" data-k="${f.k}" ${f.req?'aria-required="true"':''} ${f.type==='pick'&&!ro?'data-pick':''} ${ro||f.type==='yn'||f.type==='file'?'readonly':''} placeholder="${esc(ro?'':f.ph||'')}" value="${esc(shown)}" autocomplete="${f.ac||'off'}">${extra}${tg}</div>${f.help?`<div class="fhelp">${esc(f.help)}</div>`:''}</div>`}).join('')}
 const fmLast=fm=>fm.last?fm.last():ask('Accept?',fm.accept);
 // Redraw the form (fields may appear or go away) and put the cursor back on the same field, or on the next one
 function fmRedraw(t,move){const id=t.id,inP=!!t.closest('#panel');if(inP)drawPanel();else render();
@@ -51,3 +53,14 @@ FIELD.fm={
 PICK.fm={source:t=>fdef(t).items(),cur:t=>pickLabel(fdef(t),fmOf(t).v[t.dataset.k]),title:t=>{const f=fdef(t);return f.title||f.l},
   commit(t,it){const fm=fmOf(t),f=fdef(t);fm.v[f.k]=it.v;if(f.change){f.change();fmRedraw(t,true);return}
     if(!moveFocus(t,1)){if(P)panelLast();else fmLast(fm)}}};
+
+/* Sign-in style pages (page.auth): the app's titled panel with a few website touches. title and right (the text on the right of the title strip) are plain text; lead, body and foot are
+   HTML (escape what you put in them); step (1 or 2) shows "Step n of 2" in the title strip. */
+function authCard({title,right,lead,body,foot,step}){
+  return `<section class="tp au"><header class="tp-bar"><b>${esc(title)}</b><span>${esc(right||(step?`Step ${step} of 2`:'BCG ERP'))}</span></header><div class="tp-body">`+
+    `${lead?`<p class="au-lead">${lead}</p>`:''}<div id="amsg" class="amsg" role="alert" hidden></div>${body||''}${foot?`<p class="au-foot">${foot}</p>`:''}</div></section>`}
+// A button on the card. key = the name of the key-rail entry it runs (Ctrl+A is the page's accept key)
+const auBtn=(label,key,ghost)=>`<button type="button" class="au-btn${ghost?' ghost':''}" data-act="rk" data-key="${esc(key)}">${esc(label)}</button>`;
+// A Yes / No field can also be clicked on these pages
+document.addEventListener('click',e=>{if(!document.body.classList.contains('auth'))return;const t=e.target.closest('input[data-form]');if(!t)return;
+  const f=fdef(t);if(f&&f.type==='yn'&&!fmRO(f)){const fm=fmOf(t);fm.v[f.k]=!fm.v[f.k];if(f.change){f.change();fmRedraw(t,false)}else t.value=fm.v[f.k]?'Yes':'No'}});

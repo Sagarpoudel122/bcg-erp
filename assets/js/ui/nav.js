@@ -7,8 +7,8 @@ const ROUTES={home:'home.html',ledger:'ledger-create.html',ledgers:'ledger-list.
   hrhome:'hr-home.html',hremps:'hr-employees.html',hrempform:'hr-employee-form.html',hrleave:'hr-leave.html',hrleavedet:'hr-leave-detail.html',hrsal:'hr-salary.html',hrslip:'hr-payslip.html',
   hrmyatt:'hr-my-attendance.html',hrmyleave:'hr-my-leave.html',hrmypay:'hr-my-payslips.html',bthome:'bt-home.html',
   // signing in and businesses (no menu) ...
-  login:'login.html',signup:'signup.html',verify:'verify-email.html',forgot:'forgot-password.html',reset:'reset-password.html',invite:'accept-invite.html',
-  selbiz:'select-business.html',bizreg:'business-register.html',mailbox:'mailbox.html',
+  login:'login.html',signup:'signup.html',forgot:'forgot-password.html',reset:'reset-password.html',
+  selbiz:'select-business.html',bizreg:'business-register.html',
   // ... and the company screens inside the app
   setup:'business-setup.html',users:'users.html',account:'my-account.html'};
 const href=(v,q)=>ROUTES[v]+(q?'?'+new URLSearchParams(q):'');
@@ -25,7 +25,7 @@ function editVoucher(v){v=v||S.db.list[S.db.sel];if(!v)return;
   if(!can('v.alter')||!canSee(v.type)){openPrint(v.id);return}
   if(v.status==='Cancelled'){say(`${vno(v.type,v.seq,v.pre)} is cancelled and cannot be altered.`,'bad');return}
   if(v.date<=LOCK){say(`${vno(v.type,v.seq,v.pre)} is in a locked period (up to ${bsText(LOCK)}). Only the Owner can unlock it.`,'bad');return}
-  const b=bs(v.date);S.drafts[v.type]={type:v.type,date:{m:b.m,d:b.d},lines:clone(v.lines),narr:v.narr,editingId:v.id,mode:'double'};
+  const b=bs(v.date);S.drafts[v.type]={type:v.type,date:{m:b.m,d:b.d},lines:clone(v.lines),narr:v.narr,billNo:v.billNo||'',editingId:v.id,mode:'double'};
   S.rstack=[];navigate(v.type)}
 // Sidebar: a normal website menu. Esc from any screen puts the cursor here; arrows + Enter (or a letter) open an item.
 // The product has three parts (Account, HRM, Business Tools); the menu shows the part you are in, and only what your role may open.
@@ -38,11 +38,11 @@ const MENU={
   {sec:'Me'},{l:'Attendance',go:'hrmyatt'},{l:'Leave',go:'hrmyleave'},{l:'Salary',go:'hrmypay'}],
  tools:[{sec:'Business Tools'},{l:'Tools',go:'bthome'}]};
 const TAIL=[{sec:'Company'},{l:'Business Setup',go:'setup'},{l:'User Management',go:'users'},{l:'My Account',go:'account'},
-  {sec:'Prototype'},{l:'Mailbox',go:'mailbox'},{l:'Options',go:'options'}];
+  {sec:'Prototype'},{l:'Options',go:'options'}];
 const GATES=Object.values(GATE);
 const isGate=id=>GATES.includes(id);
 // Which part a screen belongs to (company and prototype screens belong to none: they keep the part you were in)
-const modOf=id=>['options','setup','users','account','mailbox'].includes(id)?null:id.startsWith('hr')?'hrm':id.startsWith('bt')?'tools':'acc';
+const modOf=id=>['options','setup','users','account'].includes(id)?null:id.startsWith('hr')?'hrm':id.startsWith('bt')?'tools':'acc';
 // What each screen needs (core/roles.js). 'acc' / 'hrm' = any access to that part. Screens not listed are open to everyone signed in.
 const SCREEN={home:'acc',ledger:'ledger.create',ledgers:'ledger.view',group:'groups.edit',groups:'groups.view',contra:'v.contra',payment:'v.payment',receipt:'v.receipt',journal:'v.journal',
   tb:'reports',bs:'reports',pl:'reports',cf:'reports',gsum:'reports',lr:'report.ledger',daybook:'daybook',audit:'audit',

@@ -1,6 +1,6 @@
 /* User Management (Admin): who can open this business and with which role. N invites by email (valid 7 days), Enter changes
    the role, D deactivates (their vouchers stay theirs), R reactivates, and the Owner can hand ownership to another Admin (Alt+O).
-   A user can also be linked to an employee record, which gives them the HRM "Me" screens. Prototype: emails land in the Mailbox. */
+   A user can also be linked to an employee record, which gives them the HRM "Me" screens. */
 const UH={sel:0,list:[]};
 const BID=CUR.biz?CUR.biz.id:'';
 function uRows(){const ms=DB.membersOf(BID).map(m=>({k:'m',m,u:DB.user(m.user)})).filter(r=>r.u),ord=r=>(r.m.owner?0:10)+ROLE_ORDER.indexOf(r.m.role);
@@ -31,26 +31,26 @@ function ufSave(){const v=UF.v;
     auditNote('Role changed',`${u.name}: ${was} → ${roleName(m)}${m.emp?' · employee '+empName(m.emp):''}`);P.then=null;closePanel();say(`${u.name} is now ${roleName(m)}.`,'ok');return}
   const email=normEmail(v.email),pr=DB.inviteProblem(BID,email);if(pr)return fmBad(UF,'email',pr);
   DB.invite({biz:BID,email,name:v.name.trim()||empName(v.emp),role:v.role,emp:v.emp,by:UID});auditNote('Invited',`${email} as ${ROLES[v.role]}`);
-  P.then=null;closePanel();UH.sel=UH.list.findIndex(r=>r.k==='i'&&r.i.email===email);render();say(`Invitation sent to ${email}. It works for 7 days.`,'ok')}
-PANELS.uf={view:()=>`<h2>${UF_M?'Change role · '+esc(DB.user(UF_M.user).name):'Invite a user'}</h2>${formHtml(UF)}<p class="pfoot">Enter next · Ctrl+A ${UF_M?'save':'send invitation'} · Esc cancel</p>`,
+  P.then=null;closePanel();UH.sel=UH.list.findIndex(r=>r.k==='i'&&r.i.email===email);render();say(`${email} is invited. They sign in (or create an account) with this email and accept on Select Business. Valid 7 days.`,'ok')}
+PANELS.uf={view:()=>`<h2>${UF_M?'Change role · '+esc(DB.user(UF_M.user).name):'Invite a user'}</h2>${formHtml(UF)}<p class="pfoot">Enter next · Ctrl+A ${UF_M?'save':'invite'} · Esc cancel</p>`,
   last:ufSave,accept:ufSave};
 function inviteUser(){UF_M=null;UF.v={email:'',name:'',role:'accountant',emp:''};openPanel('uf',0,null)}
 function alterUser(){const r=UH.list[UH.sel];if(!r)return;
-  if(r.k==='i'){say(`${r.i.email} has not accepted yet. R sends the invitation again, D cancels it.`);return}
+  if(r.k==='i'){say(`${r.i.email} has not accepted yet. R renews the invitation, D cancels it.`);return}
   const m=r.m;if(m.status!=='Active')return say(`${r.u.name} is deactivated. Press R to reactivate first.`,'bad');
   if(m.owner)return say('The Owner is always an Admin. Hand ownership to another Admin first (Alt+O).','bad');
   if(m.user===UID)return say('You cannot change your own role.','bad');
   UF_M=m;UF.v={email:r.u.email,name:r.u.name,role:m.role,emp:m.emp||''};openPanel('uf',0,null)}
 /* ---------- deactivate, reactivate, invitations, ownership ---------- */
 function deactivate(){const r=UH.list[UH.sel];if(!r)return;
-  if(r.k==='i'){ask(`Cancel the invitation to ${r.i.email}? The link in the email stops working.`,()=>{r.i.status='Cancelled';DB.save();auditNote('Invitation cancelled',r.i.email);render();say('Invitation cancelled.','ok')});return}
+  if(r.k==='i'){ask(`Cancel the invitation to ${r.i.email}? It can no longer be accepted.`,()=>{r.i.status='Cancelled';DB.save();auditNote('Invitation cancelled',r.i.email);render();say('Invitation cancelled.','ok')});return}
   const m=r.m;if(m.status!=='Active')return say(`${r.u.name} is already deactivated.`,'bad');
   if(m.user===UID)return say('You cannot deactivate yourself.','bad');
   if(m.owner)return say('The Owner cannot be deactivated. Hand ownership on first (Alt+O).','bad');
   ask(`Deactivate ${r.u.name}? They can no longer open ${dot(COMPANY)} Their vouchers stay, still shown as theirs.`,()=>{
     m.status='Inactive';m.off=now();DB.save();auditNote('Deactivated',`${r.u.name} (${roleName(m)})`);render();say(`${r.u.name} is deactivated.`,'ok')})}
 function reactivate(){const r=UH.list[UH.sel];if(!r)return;
-  if(r.k==='i'){DB.resendInvite(r.i);auditNote('Invitation sent again',r.i.email);render();say(`Invitation sent again to ${r.i.email}. It works for 7 days.`,'ok');return}
+  if(r.k==='i'){DB.resendInvite(r.i);auditNote('Invitation renewed',r.i.email);render();say(`Invitation to ${r.i.email} renewed. It works for 7 days.`,'ok');return}
   const m=r.m;if(m.status==='Active')return say(`${r.u.name} is already active.`,'bad');
   ask(`Reactivate ${r.u.name} as ${roleName(m)}?`,()=>{
     if(m.emp&&DB.membersOf(BID).some(x=>x!==m&&x.status==='Active'&&x.emp===m.emp))m.emp='';   // that employee record is linked to someone else now
@@ -60,11 +60,11 @@ function makeOwner(){const r=UH.list[UH.sel];if(!r||!can('owner'))return;
   if(r.m.user===UID)return say('You are already the Owner.','bad');
   ask(`Make ${r.u.name} the Owner of ${COMPANY}? You stay an Admin. Only the Owner can lock books, delete the business or hand ownership on.`,()=>{
     auditNote('Ownership handed over',`${CUR.user.name} → ${r.u.name}`);CUR.member.owner=false;r.m.owner=true;
-    DB.mail(r.u.email,`You are now the Owner of ${COMPANY}`,[`Hi ${r.u.name},`,`${CUR.user.name} made you the Owner of ${COMPANY} on BCG ERP.`]);DB.save();
+    DB.save();
     USER=`${CUR.user.name} (${roleName(CUR.member)})`;render();say(`${r.u.name} is now the Owner.`,'ok')})}
 start({id:'users',title:'User Management',view:vUsers,state:UH,activate:alterUser,
   keys:()=>{const r=UH.list[UH.sel],inv=r&&r.k==='i';
     return[{k:'↑ ↓',l:'Move'},{k:'N',l:'Invite user',a:inviteUser},{k:'Enter',l:'Change role',a:alterUser},
-      {k:'D',l:inv?'Cancel invitation':'Deactivate',a:deactivate},{k:'R',l:inv?'Send again':'Reactivate',a:reactivate},
-      ...(can('owner')?[{k:'Alt+O',l:'Make Owner',a:makeOwner}]:[]),{gap:1},{k:'Alt+M',l:'Mailbox',a:()=>go('mailbox')},{gap:1},escKey()]},
+      {k:'D',l:inv?'Cancel invitation':'Deactivate',a:deactivate},{k:'R',l:inv?'Renew':'Reactivate',a:reactivate},
+      ...(can('owner')?[{k:'Alt+O',l:'Make Owner',a:makeOwner}]:[]),{gap:1},escKey()]},
   key(e){if(listNav(e,UH,UH.list.length,render))return true;if(e.key==='Enter'){stop(e);alterUser();return true}return false}});

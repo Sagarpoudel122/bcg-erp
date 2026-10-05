@@ -20,7 +20,7 @@ function saveEmp(){const f=EF,name=f.name.trim(),bad=(m,id)=>{say(m,'bad');if(id
   if(EF_ID){Object.assign(emp(EF_ID),data);flash(`${name} updated. A new salary applies to months not yet paid.`);navigate('hremps');return}
   const id='e'+Date.now();S.emps.push({id,code:'E-'+String(S.emps.length+1).padStart(3,'0'),active:true,name,desig:f.desig.trim(),join:f.join.trim(),phone:f.phone.trim(),basic:cents(f.basic)});
   if(email){DB.invite({biz:CUR.biz.id,email,name,role:'employee',emp:id,by:UID});auditNote('Invited',`${email} as Employee (${name})`)}
-  EF=blankEF();render('#ef-name');say(email?`Saved. ${name} is added and an invitation to log in went to ${email}.`:`Saved. ${name} is added. Give them a login from User Management.`,'ok')}
+  EF=blankEF();render('#ef-name');say(email?`Saved. ${name} is added and ${email} can log in: they sign in with that email and accept the invitation.`:`Saved. ${name} is added. Give them a login from User Management.`,'ok')}
 FIELD.ef={enter:efEnter,input:t=>{EF[t.dataset.k]=t.value},amt:(t,raw)=>{EF[t.dataset.k]=raw}};
 start({id:'hrempform',title:'Employee',view:vEmpForm,focus:()=>'#ef-name',
   init(){const e=param('e')&&emp(param('e'));EF_ID=e?e.id:null;EF=e?{name:e.name,desig:e.desig,join:e.join,phone:e.phone,basic:(e.basic/100).toFixed(2)}:blankEF()},

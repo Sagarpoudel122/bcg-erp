@@ -10,4 +10,7 @@
 .tp-info .no{font-family:var(--f-num);color:var(--muted);font-size:14px}
 .tp-info .date{margin-left:auto;display:flex;gap:10px;align-items:baseline}
 .tp-info .date .in{width:150px;text-align:right}
+.tp-info .billno{margin-left:auto;display:flex;gap:10px;align-items:baseline}
+.tp-info .billno .in{width:170px}
+.tp-info .billno+.date{margin-left:0}
 .tp-note{margin:0;padding:6px 0 0;color:var(--muted);font-size:14px}

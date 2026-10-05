@@ -2,8 +2,12 @@
 // Messages: 'ok' = small toast top right, 'bad' / 'warn' = popup that must be dismissed, anything else = hint in the status bar.
 function say(text,kind=''){
   if(text&&kind==='ok'){S.msg=null;drawStatus();toast(text);return}
-  if(text&&(kind==='bad'||kind==='warn')){alertBox(text,kind);return}
+  if(text&&(kind==='bad'||kind==='warn')){if(!authNote(text,kind))alertBox(text,kind);return}
   S.msg=text?{text,kind}:null;drawStatus()}
+// On the website-style pages (body.auth) a wrong entry is shown inside the card, not in a popup. Typing clears it.
+function authNote(text,kind){const el=document.getElementById('amsg');if(!el||!document.body.classList.contains('auth'))return false;
+  el.textContent=text;el.className='amsg '+kind;el.hidden=false;return true}
+document.addEventListener('input',()=>{const el=document.getElementById('amsg');if(el&&!el.hidden)el.hidden=true});
 function toast(text){const box=$('#toasts'),el=document.createElement('div');el.className='toast';
   el.innerHTML=`<span class="tick" aria-hidden="true">✓</span><span>${esc(text)}</span>`;box.appendChild(el);
   while(box.children.length>3)box.firstChild.remove();

@@ -9,7 +9,7 @@ const blankLine=side=>({side,lid:'',amt:'',alloc:[],inst:{open:false,type:'Chequ
 // "Account on top" layout (mode 'single'): the cash/bank Account first, then the particulars. Journal is always Dr/Cr.
 const ACC={contra:'Cr',payment:'Cr',receipt:'Dr'};
 const blank=(type,mode)=>{mode=mode||'double';const a=ACC[type];
-  return{type,mode,date:{m:2,d:15},lines:mode==='single'?[blankLine(a),blankLine(a==='Dr'?'Cr':'Dr')]:[blankLine('Dr'),blankLine('Cr')],narr:'',editingId:null}};
+  return{type,mode,date:{m:2,d:15},lines:mode==='single'?[blankLine(a),blankLine(a==='Dr'?'Cr':'Dr')]:[blankLine('Dr'),blankLine('Cr')],narr:'',billNo:'',editingId:null}};
 const draft=type=>S.drafts[type]||(S.drafts[type]=blank(type));
 /* ---------- Bills ---------- */
 function openingBills(l){

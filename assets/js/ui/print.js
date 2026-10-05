@@ -16,7 +16,7 @@ function openPrint(id){
    <div class="paper">
     ${printHead()}
     <h3>${TYPES[v.type].name.toUpperCase()} VOUCHER</h3>
-    <div class="pm"><span>No: ${vno(v.type,v.seq,v.pre)}</span><span>Date: ${bsText(v.date)} (BS)</span></div>
+    <div class="pm"><span>No: ${vno(v.type,v.seq,v.pre)}${v.billNo?` · Bill No: ${esc(v.billNo)}`:''}</span><span>Date: ${bsText(v.date)} (BS)</span></div>
     ${can?'<div class="stamp">CANCELLED</div>':''}
     <table><thead><tr><th>Particulars</th><th class="r">Debit (NPR)</th><th class="r">Credit (NPR)</th></tr></thead><tbody>${rows}
     <tr class="tot"><td>Total</td><td class="r num">${fmt(tot)}</td><td class="r num">${fmt(tot)}</td></tr></tbody></table>
