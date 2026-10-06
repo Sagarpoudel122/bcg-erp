@@ -153,6 +153,10 @@ document.documentElement.setAttribute('data-lang',l);document.documentElement.la
     set(b.dataset.set);try{localStorage.setItem('bcg.lang',b.dataset.set)}catch(e){}
   })});
   set(root.getAttribute('data-lang'));
+  // Tab and Shift+Tab go round the page and never out to the browser's address bar
+  document.addEventListener('keydown',function(e){if(e.key!=='Tab'||e.ctrlKey||e.altKey)return;
+    var L=[].filter.call(document.querySelectorAll('a[href],button'),function(el){return el.getClientRects().length}),n=L.length;if(!n)return;
+    e.preventDefault();var i=L.indexOf(document.activeElement);L[i<0?(e.shiftKey?n-1:0):(i+(e.shiftKey?-1:1)+n)%n].focus()});
 })();
 </script>
 </body>

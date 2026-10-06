@@ -109,6 +109,7 @@ function onKey(e){
     if(AL.ask){if(k==='y'||k==='Y'||k==='Enter')answer(true);else if(k==='n'||k==='N'||k==='Escape')answer(false)}
     else if(k==='Enter'||k==='Escape'||k===' ')closeAlert();
     return}
+  if(k==='Tab'&&!e.ctrlKey&&!e.altKey){stop(e);if(UM.open)openUserMenu(false);tabStep(e.shiftKey,CALC.open?$('#calc'):document);return}   // Tab never leaves the page (ui/dom.js)
   if(!$('#modal').hidden){if(k==='Escape'||k==='Enter'){stop(e);closePrint()}return}
   if(CALC.open){calcKey(e);return}   // the calculator (ui/calc.js) takes every key; typing passes through to its field
   if(UM.open){if(umKey(e))return;openUserMenu(false)}   // the user menu takes ↑ ↓ Enter Esc; any other key closes it and goes on

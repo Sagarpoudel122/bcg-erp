@@ -254,7 +254,7 @@ The same rules as before: Enter next field, Backspace previous field, Esc back (
 Alt+G Go To, Alt+B change business, Alt+Q log out, F4 to F9 and Ctrl+F8 / Ctrl+F9 vouchers, F2 date or period,
 Ctrl+H Account layout, Alt+C in an Amount field opens the calculator (type a sum, Enter fills the field; elsewhere on a voucher Alt+C creates a ledger).
 Every voucher has Debit and Credit columns (a line's amount sits in the column of its Dr/Cr), a Bill No., and Cur Bal under each ledger; bill details start as On Account. In forms, Y / N (or Space) answer Yes/No fields and a picture field opens the file chooser with Space.
-Browser shortcuts are blocked. Warnings and questions are popups, successes are a toast at the top right, hints stay in the bar at the bottom.
+Browser shortcuts are blocked. Tab / Shift+Tab go round the screen (or the open popup) and wrap from the last item to the first, so they never move out to the browser's address bar (`tabStep` in `ui/dom.js`; the landing page has the same few lines). Warnings and questions are popups, successes are a toast at the top right, hints stay in the bar at the bottom.
 
 ## Old single-file version
 
