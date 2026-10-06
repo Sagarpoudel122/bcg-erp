@@ -32,7 +32,12 @@ const TYPES={
  contra:{name:'Contra',key:'F4',prefix:'CTR',sketch:4,rule:'Moves money between cash and bank. Only Cash, Bank and Bank OD ledgers can be used.'},
  payment:{name:'Payment',key:'F5',prefix:'PMT',sketch:5,rule:'Money going out. Cash or Bank goes on the Cr side.'},
  receipt:{name:'Receipt',key:'F6',prefix:'RCT',sketch:6,rule:'Money coming in. Cash or Bank goes on the Dr side.'},
- journal:{name:'Journal',key:'F7',prefix:'JRN',sketch:7,rule:'Adjustments with no cash or bank: credit purchases, depreciation, corrections.'}};
+ journal:{name:'Journal',key:'F7',prefix:'JRN',sketch:7,rule:'Adjustments with no cash or bank: credit purchases, depreciation, corrections.'},
+ // Item invoices (core/invoice.js): each one posts ordinary Dr/Cr lines, so every report works on them unchanged
+ sales:{name:'Sales',key:'F8',prefix:'SLS',inv:true,rule:'Goods sold to a customer or for cash. Items, quantity, rate and VAT; the customer owes the total.'},
+ purchase:{name:'Purchase',key:'F9',prefix:'PUR',inv:true,rule:'Goods bought from a supplier or for cash. Type the supplier\'s bill number in Bill No.'},
+ salesret:{name:'Sales Return',alt:'Credit Note',key:'Ctrl+F8',prefix:'CRN',inv:true,rule:'Goods a customer sent back. Pick the original invoice to fill the items; the customer owes less.'},
+ purchret:{name:'Purchase Return',alt:'Debit Note',key:'Ctrl+F9',prefix:'DRN',inv:true,rule:'Goods sent back to a supplier. Pick the original bill to fill the items; you owe the supplier less.'}};
 // Voucher number prefixes are set per business in Business Setup. A saved voucher keeps the prefix it was saved with.
 if(CUR.biz&&CUR.biz.prefix)for(const t in TYPES)TYPES[t].prefix=CUR.biz.prefix[t]||TYPES[t].prefix;
 const TL={New:'New Ref',Against:'Against Ref',Advance:'Advance','On Account':'On Account'};

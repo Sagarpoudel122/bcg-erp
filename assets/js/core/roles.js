@@ -3,7 +3,7 @@
    One Admin in each business is the Owner: only the Owner locks books, deletes the business or hands ownership on. */
 const ROLES={admin:'Admin',accountant:'Accountant',manager:'Manager',sales:'Sales/Cashier',viewer:'Viewer',employee:'Employee'};
 const ROLE_SUB={admin:'Everything, including users and setup',accountant:'Ledgers, all vouchers, cancel, reports',
-  manager:'Ledgers, vouchers, reports, HRM, Business Tools',sales:'Contra, Payment, Receipt; own vouchers only',
+  manager:'Ledgers, vouchers, reports, HRM, Business Tools',sales:'Contra, Payment, Receipt, Sales, Sales Return; own vouchers only',
   viewer:'Reports and lists, no changes',employee:'HRM only: own attendance, leave, salary'};
 const ROLE_ORDER=Object.keys(ROLES);
 // action -> roles that may do it
@@ -11,6 +11,8 @@ const PERM={
   'groups.view':'admin accountant manager viewer','groups.edit':'admin accountant',
   'ledger.view':'admin accountant manager sales viewer','ledger.create':'admin accountant manager','ledger.delete':'admin accountant',
   'v.contra':'admin accountant manager sales','v.payment':'admin accountant manager sales','v.receipt':'admin accountant manager sales',
+  'v.sales':'admin accountant manager sales','v.salesret':'admin accountant manager sales','v.purchase':'admin accountant manager','v.purchret':'admin accountant manager',
+  'item.view':'admin accountant manager sales viewer','item.create':'admin accountant manager',
   'v.journal':'admin accountant manager','v.alter':'admin accountant manager','v.cancel':'admin accountant',
   'reports':'admin accountant manager viewer','report.ledger':'admin accountant manager sales viewer','daybook':'admin accountant manager sales viewer',
   'audit':'admin','hrm.admin':'admin manager','tools':'admin manager sales',

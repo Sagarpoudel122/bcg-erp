@@ -24,32 +24,54 @@ function render(focus){
   const sel=view().querySelector('.sel');if(sel&&!focus)sel.scrollIntoView({block:'nearest'});
 }
 /* ---------- top bar: the parts of the product this user may open, the business (Alt+B), the user (My Account) ---------- */
-function drawTop(){const t=document.querySelector('.top');if(!t)return;
+function drawTop(){const t=document.querySelector('.top');if(!t)return;UM.open=false;
   if(PAGE.auth){t.innerHTML=`<a class="brand" href="../index.html">BCG ERP</a>${CUR.user?`<span class="who">${esc(CUR.user.email)}</span><button type="button" class="link" data-act="logout">Log out</button>`:''}`;return}
   if(PAGE.bare){t.innerHTML=`<b>BCG ERP</b>${CUR.user?`<span class="user" style="margin-left:auto">${esc(CUR.user.email)}</span>`:''}`;return}
   const parts=myParts(),tab=m=>`<button tabindex="-1" data-act="mod" data-m="${m}" class="${S.mod===m?'on':''}" ${S.mod===m?'aria-current="true"':''}>${MODNAME[m]}<kbd>Alt+${['acc','hrm','tools'].indexOf(m)+1}</kbd></button>`;
   const mods=parts.length>1?`<nav class="mods" aria-label="Parts">${parts.map(tab).join('')}</nav>`:'';
   const logo=CUR.biz.logo?`<img class="logo" src="${esc(CUR.biz.logo)}" alt="">`:'';
-  t.innerHTML=`<b>BCG ERP</b>${mods}<button tabindex="-1" class="co" data-act="biz" title="Change business (Alt+B)">${logo}${esc(COMPANY)}</button><span class="fy">FY 2083/84 · ${bsText(TODAY)}</span><button tabindex="-1" class="user" data-act="account" title="My Account">${esc(userLabel())}</button>`}
+  t.innerHTML=`<b>BCG ERP</b>${mods}<button tabindex="-1" class="co" data-act="biz" title="Change business (Alt+B)">${logo}${esc(COMPANY)}</button><span class="fy">FY 2083/84 · ${bsText(TODAY)}</span><span class="umw"><button tabindex="-1" class="user" data-act="umenu" aria-haspopup="menu" aria-expanded="false" title="Company and account (Alt+M)">${esc(userLabel())} <span class="chev">▾</span></button><div class="umenu" id="umenu" role="menu" hidden>${umenuHtml()}</div></span>`}
+/* ---------- user menu (top bar, Alt+M): Business Setup, Users, My Account, Options, change business, log out ---------- */
+const UM={open:false};
+function umenuHtml(){return userMenuItems().map(x=>x.sec?`<h4>${esc(x.sec)}</h4>`:`<button tabindex="-1" role="menuitem" data-act="ugo" data-go="${x.go}" class="${x.go===S.view?'on':''}">${esc(x.l)}</button>`).join('')
+  +`<hr><button tabindex="-1" role="menuitem" data-act="biz">Change business<kbd>Alt+B</kbd></button><button tabindex="-1" role="menuitem" data-act="logout">Log out<kbd>Alt+Q</kbd></button>`}
+function openUserMenu(on){const m=$('#umenu');if(!m)return;UM.open=on;m.hidden=!on;const b=$('.top .user');if(b)b.setAttribute('aria-expanded',on);
+  if(on){const f=m.querySelector('button');if(f)f.focus()}}
+const toggleUserMenu=()=>{if(!PAGE.bare)openUserMenu(!UM.open)};
+function umKey(e){const k=e.key,L=[...document.querySelectorAll('#umenu button')],i=L.indexOf(document.activeElement);
+  if(k==='Escape'){stop(e);openUserMenu(false);restoreFocus();return true}
+  if(k==='ArrowDown'||k==='ArrowUp'){stop(e);L[(i+(k==='ArrowDown'?1:-1)+L.length)%L.length].focus();return true}
+  if(k==='Enter'||k===' '){stop(e);if(L[i])L[i].click();return true}
+  return false}
 /* ---------- sidebar ---------- */
 let sideSeen=false;   // the open screen's own item is brought into view once, when the page opens
-function drawSide(){let i=-1;
-  $('#side').innerHTML=NAV.map(x=>{if(x.sec)return`<h3>${x.sec}</h3>`;i++;
-    return`<button tabindex="-1" data-act="nav" data-i="${i}" class="${x.go===S.view?'on':''} ${S.sb&&i===S.nav?'hot':''}" ${x.go===S.view?'aria-current="page"':''}><span>${esc(x.l)}</span>${x.kd?`<kbd>${x.kd}</kbd>`:''}</button>`}).join('');
+// Section headings are buttons that fold their items (class "folded" hides them; the phone-width menu is one row and ignores folding)
+function drawSide(){rebuildNavI();
+  const find=`<button tabindex="-1" class="find" data-act="goto"><span>Search…</span><kbd>Alt+G</kbd></button>`,cur=menuOf(S.view);
+  $('#side').innerHTML=find+NAV.map(x=>{const i=NAVI.indexOf(x),hot=S.sb&&i>=0&&i===S.nav?'hot':'';
+    if(x.sec){const open=!secFolded(x.sec);
+      return`<button tabindex="-1" class="sec ${hot}" data-act="sec" data-s="${esc(x.sec)}" aria-expanded="${open}"><span class="chev">${open?'▾':'▸'}</span>${esc(x.sec)}</button>`}
+    return`<button tabindex="-1" data-act="nav" data-go="${x.go}" class="${x.go===cur?'on':''} ${hot} ${i<0?'folded':''}" ${x.go===cur?'aria-current="page"':''}><span>${esc(x.l)}</span>${x.kd?`<kbd>${x.kd}</kbd>`:''}</button>`}).join('');
   const el=$(S.sb?'#side .hot':'#side .on');if(el&&(S.sb||!sideSeen)){sideShow(el);sideSeen=true}}
 // Scroll the menu (never the page) just enough to show item el, with its heading when it is the first under one.
 // The status bar is fixed over the bottom of the screen, so the part of the menu behind it does not count as shown.
 function sideShow(el){const box=$('#side'),b=box.getBoundingClientRect(),r=el.getBoundingClientRect(),m=18;   // m = the menu's top padding, so the first item scrolls right back to the top
-  const h=el.previousElementSibling,top=(h&&h.tagName==='H3'&&h.offsetHeight?h:el).getBoundingClientRect().top;
+  const h=el.previousElementSibling,top=(h&&h.classList.contains('sec')&&h.offsetHeight?h:el).getBoundingClientRect().top;
   const st=$('#status'),bottom=Math.min(b.bottom,innerHeight,st?st.getBoundingClientRect().top:Infinity);
   if(top<b.top+m)box.scrollTop-=b.top+m-top;else if(r.bottom>bottom-m)box.scrollTop+=r.bottom-bottom+m;
   if(r.left<b.left)box.scrollLeft-=b.left-r.left;else if(r.right>b.right)box.scrollLeft+=r.right-b.right}   // phone width: the menu is one row
 function focusSidebar(){pickClose();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
-  const i=NAVI.findIndex(x=>x.go===S.view);S.nav=i>=0?i:0;S.sb=true;S.msg=null;drawSide();drawKeys();drawStatus()}
+  rebuildNavI();const i=NAVI.findIndex(x=>x.go===menuOf(S.view));S.nav=i>=0?i:0;S.sb=true;S.msg=null;drawSide();drawKeys();drawStatus()}
 function leaveSidebar(){S.sb=false;render(PAGE.focus?PAGE.focus():null)}
-function sbKey(e){const k=e.key,n=NAVI.length;
+// ↑ ↓ move, Enter opens an item or folds a heading, ← goes up to the heading (and folds it), → opens a folded heading (or goes into the screen)
+function sbKey(e){const k=e.key,n=NAVI.length,cur=NAVI[S.nav]||{};
   if(k==='ArrowDown'||k==='ArrowUp'){stop(e);S.nav=(S.nav+(k==='ArrowDown'?1:-1)+n)%n;drawSide();return true}
-  if(k==='Enter'){stop(e);go(NAVI[S.nav].go);return true}
+  if(k==='Enter'||(k===' '&&cur.sec)){stop(e);if(cur.sec)toggleSec(cur.sec);else go(cur.go);return true}
+  if(k==='ArrowLeft'){stop(e);
+    if(cur.sec){if(!secFolded(cur.sec))toggleSec(cur.sec)}
+    else{const h=NAVI.findIndex(x=>x.sec&&x.sec===cur.secName);if(h>=0){S.nav=h;drawSide()}}
+    return true}
+  if(k==='ArrowRight'&&cur.sec&&secFolded(cur.sec)){stop(e);toggleSec(cur.sec);return true}
   if(k==='Escape'||k==='ArrowRight'){stop(e);if(!isGate(S.view)||PAGE.state)leaveSidebar();return true}   // a gateway with something to select (Dashboard) can be entered
   if(k.length===1&&!e.ctrlKey&&!e.altKey){const l=k.toLowerCase();
     for(let j=1;j<=n;j++){const i=(S.nav+j)%n;if(NAVI[i].l[0].toLowerCase()===l){stop(e);S.nav=i;drawSide();return true}}}
@@ -60,7 +82,7 @@ function keysFor(){   // every screen in the app also gets Alt+G (Go To), Alt+B 
   const r=keysBase();if(PAGE.bare)return r;const i=r.findIndex(x=>x.k==='Escape');
   r.splice(i<0?r.length:i,0,{k:'Alt+G',l:'Go To',a:openGoto},{k:'Alt+B',l:'Business',a:()=>go('selbiz')},{k:'Alt+Q',l:'Log out',a:logOut});return r}
 function keysBase(){
-  if(S.sb)return[{k:'↑ ↓',l:'Move'},{k:'Enter',l:'Open'},{k:'Letter',l:'Jump to item'},...(!isGate(S.view)||PAGE.state?[{gap:1},{k:'Escape',kd:'Esc',l:isGate(S.view)?'Into the screen':'Back to screen',a:leaveSidebar}]:[]),
+  if(S.sb)return[{k:'↑ ↓',l:'Move'},{k:'Enter',l:'Open / fold'},{k:'← →',l:'Fold / open section'},{k:'Letter',l:'Jump to item'},...(!isGate(S.view)||PAGE.state?[{gap:1},{k:'Escape',kd:'Esc',l:isGate(S.view)?'Into the screen':'Back to screen',a:leaveSidebar}]:[]),
     ...(Object.keys(TYPES).some(canSee)?[{gap:1},...Object.keys(TYPES).filter(canSee).map(t=>({k:TYPES[t].key,l:TYPES[t].name,a:()=>go(t)}))]:[])];
   return PAGE.keys?PAGE.keys():[escKey()]}
 function drawKeys(){const r=S.rail=keysFor();
@@ -89,6 +111,7 @@ function onKey(e){
     return}
   if(!$('#modal').hidden){if(k==='Escape'||k==='Enter'){stop(e);closePrint()}return}
   if(CALC.open){calcKey(e);return}   // the calculator (ui/calc.js) takes every key; typing passes through to its field
+  if(UM.open){if(umKey(e))return;openUserMenu(false)}   // the user menu takes ↑ ↓ Enter Esc; any other key closes it and goes on
   const t=e.target;
   if(PK.input&&t===PK.input&&pickKey(e))return;
   const kn=keyName(e);
@@ -99,6 +122,7 @@ function onKey(e){
     if(kn==='Alt+G'){stop(e);openGoto();return}
     if(kn==='Alt+B'){stop(e);go('selbiz');return}
     if(kn==='Alt+Q'){stop(e);logOut();return}
+    if(kn==='Alt+M'){stop(e);toggleUserMenu();return}
     if(/^Alt\+[123]$/.test(kn)){stop(e);goMod(['acc','hrm','tools'][+kn.slice(-1)-1]);return}}
   if(S.sb){sbKey(e);return}
   if(PAGE.key&&PAGE.key(e))return;
@@ -111,10 +135,11 @@ function listNav(e,state,n,after){const k=e.key;
 /* ---------- mouse (optional) ---------- */
 document.addEventListener('mousedown',e=>{const it=e.target.closest('#pick .it');if(it){e.preventDefault();pickCommit(PK.items[+it.dataset.i])}});
 document.addEventListener('click',e=>{
+  if(UM.open&&!e.target.closest('.umw'))openUserMenu(false);
   const b=e.target.closest('[data-act]');
   if(b){const a=b.dataset.act;
     if(a==='key'){const x=S.rail[+b.dataset.i];if(x&&x.a)x.a()}
-    else if(a==='nav')go(NAVI[+b.dataset.i].go);else if(a==='mod')goMod(b.dataset.m);else if(a==='biz')go('selbiz');else if(a==='account')go('account');
+    else if(a==='nav'||a==='ugo')go(b.dataset.go);else if(a==='sec')toggleSec(b.dataset.s);else if(a==='goto')openGoto();else if(a==='umenu')toggleUserMenu();else if(a==='mod')goMod(b.dataset.m);else if(a==='biz')go('selbiz');else if(a==='account')go('account');
     else if(a==='rk'){const x=S.rail.find(r=>r.k===b.dataset.key);if(x&&x.a)x.a()}   // a button on an auth card runs the key-rail entry of that name
     else if(a==='logout')logOut();else if(a==='pwtoggle'){const i=b.parentElement.querySelector('input');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'}
     else if(a==='yes')answer(true);else if(a==='no')answer(false);else if(a==='closeprint')closePrint();else if(a==='closealert')closeAlert();return}
@@ -147,6 +172,7 @@ function start(page){
     rebuildGroups();if(!GM[S.lf.group])S.lf.group='Sundry Debtors';   // custom groups of this business; a draft may point at a deleted one
     const parts=myParts(),part=modOf(page.id);S.mod=part&&parts.includes(part)?part:parts.includes(S.mod)?S.mod:parts[0];buildNav()}
   S.view=page.id;S.sb=!page.bare&&isGate(page.id);S.msg=null;S.ask=null;
+  if(!page.bare)openCurSec();
   if(page.init&&page.init()===false)return;   // init() returns false when it sends you to another page
   render(S.sb?null:(page.focus?page.focus():null));
   if(page.ready)page.ready();

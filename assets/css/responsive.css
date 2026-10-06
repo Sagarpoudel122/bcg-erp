@@ -11,7 +11,7 @@
   .keys{grid-column:auto}
   main{padding:16px 0 24px}
   .side{position:static;height:auto;flex-direction:row;overflow-x:auto;padding:8px 0;border-right:0;border-bottom:1px solid var(--line);background:none}
-  .side h3{display:none}.side button{white-space:nowrap}.side button kbd{display:none}
+  .side h3,.side button.sec{display:none}.side button{white-space:nowrap}.side button kbd{display:none}.side button.folded{display:flex}.side button.find{margin:0 8px 0 0}
   .keys{border-top:1px solid var(--line);padding:12px 0 120px;flex-direction:row;flex-wrap:wrap}
   .keys .gap{display:none}
   .f{grid-template-columns:minmax(0,1fr)}
@@ -23,5 +23,6 @@
   .narr{grid-template-columns:minmax(0,1fr)}
   .prow.a,.prow.i,.prow.b{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .top{padding:10px 16px}#status{padding:9px 16px}
+  .umenu{left:0;right:auto;max-width:calc(100vw - 32px)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

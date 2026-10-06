@@ -79,6 +79,6 @@ function payMonth(m){
   S.pay[m]={};rows.forEach(r=>{S.pay[m][r.e.id]={gross:r.gross,unpaid:r.unpaid,ded:r.ded,net:r.net,status:'Paid'}});
   if(postsSalary()){
     const net=sumRows(rows,'net'),ln=(side,lid)=>{const l=blankLine(side);l.lid=lid;l.amt=(net/100).toFixed(2);return l};
-    const seq=++S.counters.payment,v={id:'v'+(++S.vid),type:'payment',seq,date:TODAY,lines:[ln('Dr','salary'),ln('Cr','nic')],narr:`Salary for ${mName(m)} (HRM)`,status:'Active',by:USER,uid:UID,pre:TYPES.payment.prefix};
+    const seq=++S.counters.payment,v={id:'v'+(++S.vid),type:'payment',seq,date:TODAY,lines:[ln('Dr','salary'),ln('Cr','nic')],narr:`Salary for ${mName(m)} (HRM)`,status:'Active',by:USER,uid:UID,pre:TYPES.payment.prefix,createdAt:Date.now()};
     S.vouchers.push(v);audit('Created',v,`Salary for ${mName(m)} from HRM`);no=vno('payment',seq);Object.values(S.pay[m]).forEach(r=>r.voucher=no)}
   return no}

@@ -4,7 +4,7 @@ function printHead(){const b=CUR.biz||{},bits=[b.address,b.pan?'PAN '+b.pan:'',b
   return `<div class="ph">${b.logo&&b.printLogo!==false?`<img class="plogo" src="${esc(b.logo)}" alt="">`:''}<b>${esc(COMPANY)}</b><span>${bits}</span></div>`}
 const printedBy=()=>`Printed by ${esc(USER)} on ${bsText(TODAY)}`;
 function openPrint(id){
-  const v=S.vouchers.find(x=>x.id===id);if(!v)return;const can=v.status==='Cancelled';
+  const v=S.vouchers.find(x=>x.id===id);if(!v)return;if(v.inv){openInvoicePrint(v);return}const can=v.status==='Cancelled';
   const tot=v.lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0);
   const rows=v.lines.map(l=>{const L_=led(l.lid);const sub=[];
     if(l.inst&&l.inst.open&&l.inst.no)sub.push(`${l.inst.type} ${l.inst.no}${l.inst.date?', '+l.inst.date:''}`);
@@ -26,6 +26,28 @@ function openPrint(id){
    </div></div>`;
   m.querySelector('.sheet-bar .ghost').focus();
 }
+// Sales / Purchase / Sales Return / Purchase Return: the item table with the VAT worked out, like a tax invoice, credit note or debit note
+const INV_TITLE={sales:'TAX INVOICE',purchase:'PURCHASE VOUCHER',salesret:'CREDIT NOTE',purchret:'DEBIT NOTE'};
+function openInvoicePrint(v){const can=v.status==='Cancelled',pty=led(v.inv.party),o=v.inv.orig&&S.vouchers.find(x=>x.id===v.inv.orig);
+  const c=calcInv({rows:v.inv.items}),rows=v.inv.items.map((r,i)=>{const it=item(r.iid),x=c.rows[i];
+    return `<tr><td>${i+1}</td><td>${esc(it?it.name:'(deleted item)')}</td><td class="r num">${qfmt(r.qty)} ${esc(it?it.unit:'')}</td><td class="r num">${fmt(cents(r.rate))}</td><td class="r num">${r.disc?r.disc+'%':''}</td><td class="r num">${fmt(x.taxable)}</td></tr>`}).join('');
+  const tr=(l,val,cls)=>`<tr class="${cls||''}"><td colspan="5" class="r">${l}</td><td class="r num">${val}</td></tr>`;
+  const m=$('#modal');m.hidden=false;$('#app').inert=true;
+  m.innerHTML=`<div class="back" data-act="closeprint"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Print preview">
+   <div class="sheet-bar"><b>Print preview</b><span class="muted" style="font-size:12.5px">The browser's print dialog opens here in the real app.</span><button class="ghost" data-act="closeprint">Close <kbd>Esc</kbd></button></div>
+   <div class="paper">
+    ${printHead()}
+    <h3>${INV_TITLE[v.type]}</h3>
+    <div class="pm"><span>No: ${vno(v.type,v.seq,v.pre)}${v.billNo?` · ${isBuy(v.type)?'Bill':'Ref'} No: ${esc(v.billNo)}`:''}</span><span>Date: ${bsText(v.date)} (BS)</span></div>
+    <div class="pm"><span>${isBuy(v.type)?'Supplier':'Customer'}: <b>${esc(pty.name)}</b>${pty.pan?` · PAN ${esc(pty.pan)}`:''}${pty.phone?` · ${esc(pty.phone)}`:''}</span>${o?`<span>Against: ${vno(o.type,o.seq,o.pre)} (${bsText(o.date)})</span>`:''}</div>
+    ${can?'<div class="stamp">CANCELLED</div>':''}
+    <table><thead><tr><th>S.N.</th><th>Particulars</th><th class="r">Quantity</th><th class="r">Rate</th><th class="r">Disc.</th><th class="r">Amount (NPR)</th></tr></thead><tbody>${rows}
+    ${c.disc?tr('Sub total',fmt(c.base))+tr('Discount','− '+fmt(c.disc)):''}${tr(c.vat?'Taxable amount':'Sub total',fmt(c.taxable))}${c.vat?tr('VAT',fmt(c.vat)):''}${tr('Total',fmt(c.total),'tot')}</tbody></table>
+    ${v.narr?`<p><b>Narration:</b> ${esc(v.narr)}</p>`:''}
+    ${S.q.q8?`<p class="words">${words(c.total)}</p><div class="sig"><div>Prepared by</div><div>Checked by</div><div>Approved by</div><div>${isBuy(v.type)?'Supplier':'Customer'}'s signature</div></div>`:'<div class="off">Amount in words and signature lines are hidden (Q8 off)</div>'}
+    <div class="pf"><span>${printedBy()}</span><span>Page 1 of 1</span></div>
+   </div></div>`;
+  m.querySelector('.sheet-bar .ghost').focus()}
 function closePrint(){const m=$('#modal');m.hidden=true;m.innerHTML='';$('#app').inert=false}
 function printReport(){const clone=view().querySelector('.tp-body').cloneNode(true);
   clone.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel'));clone.querySelectorAll('.lrsel,.rp-head .co,.rp-head .per').forEach(e=>e.remove());

@@ -1,7 +1,7 @@
 /* Day Book page */
 /* ---------- Day Book ---------- */
 function vDay(){const D=S.db;
-  D.list=[...S.vouchers].filter(v=>(D.all||v.date===D.date)&&(!ownOnly()||v.uid===UID)).sort((a,b)=>a.date-b.date||a.seq-b.seq);
+  D.list=[...S.vouchers].filter(v=>(D.all||v.date===D.date)&&(!ownOnly()||v.uid===UID)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)||+b.id.slice(1)-+a.id.slice(1));   // newest created first
   D.sel=Math.max(0,Math.min(D.sel,D.list.length-1));
   const rows=D.list.map((v,i)=>{const dr=v.lines.filter(l=>l.side==='Dr').reduce((a,l)=>a+cents(l.amt),0);
     const drl=v.lines.filter(l=>l.side==='Dr'),crl=v.lines.filter(l=>l.side==='Cr');const can=v.status==='Cancelled';

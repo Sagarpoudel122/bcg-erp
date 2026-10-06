@@ -63,7 +63,7 @@ whole year to date.
 
 ↑ ↓ visits everything that opens something, Enter opens it (a tile opens its report, a ledger its Ledger Report, a voucher its
 alteration or print preview); Esc in the report comes back to the dashboard. Not there yet: Upcoming Reminders (the Reminders
-screen comes later). Quick POS, Add Sales and Add Purchase stay hidden; F4 to F7 add vouchers.
+screen comes later). Quick POS stays hidden; F4 to F9 add vouchers.
 
 **Groups** (open questions R1 to R4, built on the proposed answers in `docs/proposed-answers.md`):
 
@@ -89,6 +89,10 @@ Change them in `assets/js/core/roles.js` (`PERM`).
 | Ledger create | ✓ | ✓ | ✓ | | | |
 | Ledger list | ✓ (delete) | ✓ (delete) | ✓ | ✓ | ✓ | |
 | Contra / Payment / Receipt | ✓ | ✓ | ✓ | ✓ | | |
+| Sales / Sales Return | ✓ | ✓ | ✓ | ✓ | | |
+| Purchase / Purchase Return | ✓ | ✓ | ✓ | | | |
+| Item create / alter | ✓ | ✓ | ✓ | | | |
+| Item list (stock) | ✓ | ✓ | ✓ | ✓ | ✓ | |
 | Journal | ✓ | ✓ | ✓ | | | |
 | Alter / cancel vouchers | both | both | alter | | | |
 | Reports (TB, BS, P&L, Cash Flow) | ✓ | ✓ | ✓ | | ✓ | |
@@ -116,6 +120,8 @@ bcg-erp/
     home.html                Dashboard (the Account gateway)
     group-list.html  group-form.html               groups (address ?g=<group> alters one)
     contra / payment / receipt / journal .html     vouchers (F4 to F7)
+    sales / purchase / sales-return / purchase-return .html   item invoices (F8, F9, Ctrl+F8, Ctrl+F9)
+    item-create.html  item-list.html               items (address ?id=<item> alters one) and the stock list
     ledger-create.html  ledger-list.html           ledgers
     day-book.html  audit-log.html
     trial-balance / balance-sheet / profit-loss / cash-flow .html
@@ -124,17 +130,62 @@ bcg-erp/
     hr-*.html  bt-home.html  HRM and Business Tools
     options.html             the open questions as switches, Alt+R resets the whole prototype
   assets/
-    css/   base, shell, panel, reports, fields, voucher, lists, popups, responsive, print, hrm, auth, dash
+    css/   base, shell, panel, reports, fields, voucher, invoice, lists, popups, responsive, print, hrm, auth, dash
     js/
-      core/    no screen code: util, calendar, money, db (the database), roles, data, store, accounts, balances, hrm
-      ui/      shared screen machinery: dom, messages, fields, picker, popups, form, print, nav, shell
+      core/    no screen code: util, calendar, money, db (the database), roles, data, store, accounts, balances, hrm, invoice
+      ui/      shared screen machinery: dom, messages, fields, picker, popups, form, print, nav, shell, plus the popups and fields that
+               both the voucher and the invoice pages use: bill-popup, quick-ledger, date-field
       pages/   one script per screen: auth/ (sign-in pages), company/ (setup, users, my account), hrm/, reports/
 ```
 
+## Sales, Purchase, Sales Return, Purchase Return and Items
+
+Tally-style item invoices, in the same panel, keys and colours as the other vouchers. Menu: Masters › **Items / Stock**, Vouchers › Sales (F8), Purchase (F9),
+Sales Return (Ctrl+F8, a *Credit Note*), Purchase Return (Ctrl+F9, a *Debit Note*). In the Items list, N creates an item and Enter alters one.
+
+```
+ Sales          No. SLS-2083/84-0001                       15 Asoj 2083      Customer A/c, Sales ledger, (returns: Against invoice)
+ Name of Item        Quantity     Rate   Disc %  VAT %      Amount          one row per item; Stock: 26 Bag shows under the item
+ Rice 25kg Bag              4  1,800.00     5      13    6,840.00          Sub total · Discount · VAT · Total (in words)
+```
+
+- **Posting.** An invoice saves as an ordinary voucher whose Dr/Cr lines are built from the items (`buildLines` in `core/invoice.js`), and the items are kept on `v.inv`. So Trial Balance, Ledger Report, Day Book, Balance Sheet and the pending bills work on it unchanged.
+
+| Voucher | Dr | Cr | Customer / supplier bill |
+|---|---|---|---|
+| Sales | Customer (or Cash) | Sales, VAT | New Ref = voucher number |
+| Purchase | Purchase, VAT | Supplier (or Cash) | New Ref = the Bill No. you typed (else the voucher number) |
+| Sales Return | Sales, VAT | Customer | Against Ref = the original invoice (the rest On Account) |
+| Purchase Return | Supplier | Purchase, VAT | Against Ref = the original bill |
+
+- **Sums.** Per row: qty × rate, less discount %, plus VAT % on that, each rounded to the paisa on its own row, so Dr always equals Cr. The VAT % of a row starts from the item (13 by default, 0 = exempt) and can be changed on the row. One `VAT` ledger takes both input and output VAT.
+- **Items** (`S.items`: name, code, unit, sale rate, purchase rate, VAT %, *maintain stock* Y/N, opening quantity). A service item (stock = No) keeps no quantity. Quantity in hand = opening + Purchase + Sales Return − Sales − Purchase Return, from Active vouchers only (a cancelled voucher stops counting). An item used in a voucher cannot be deleted, only deactivated. There is no valuation (FIFO, average), godown or batch yet.
+- **Keys.** Enter next, an empty Item ends the rows, **Ctrl+B** bill details (the customer's bill is split automatically; change it here), **Alt+C** creates a ledger in the party field and an item in the item field, Alt+L adds a row, Ctrl+D deletes one, Alt+P prints the last saved one.
+- **Returns.** Pick the party, then *Against invoice*: the rows are filled with what is still left to return (quantity, rate, discount and VAT of the original), and you reduce or delete rows. More than was sold or bought, or more than earlier returns left, is blocked.
+- **Checks.** Date (lock and books-begin as for other vouchers), a suitable party (customers or Cash/Bank for sales, suppliers or Cash/Bank for purchases), complete rows, bill details add up. Selling or returning out more than is in stock is a *warning* ("Save anyway?"), not a block.
+- **Alter / cancel / print.** From the Day Book as for any voucher (the number stays, the change is logged). Print preview is a tax invoice / purchase voucher / credit note / debit note with the item table and VAT.
+- Voucher number prefixes (SLS, PUR, CRN, DRN) are set in Business Setup.
+- Not here yet: VAT register or IRD/CBMS billing, separate input and output VAT ledgers, stock valuation and stock reports, godowns, batches, service lines on a stock invoice other than a *service* item.
+
 ## Three parts: Account, HRM, Business Tools
 
-The top bar switches between the parts you may open (click, or Alt+1 / Alt+2 / Alt+3). The left menu shows the part you are in,
-then the Company screens (Business Setup, User Management, My Account). Alt+G (Go To) finds a screen in any part.
+The top bar switches between the parts you may open (click, or Alt+1 / Alt+2 / Alt+3). The left menu shows the part you are in.
+Alt+G (Go To) finds a screen in any part, and so does the **Search…** button at the top of the left menu.
+
+**The left menu is kept short** (it serves both keyboard and mouse):
+
+```
+[ Search…  Alt+G ]
+Dashboard
+Day Book
+▸ MASTERS      Groups · Ledgers · Items / Stock     (Enter opens the list, N creates; the Create screens are in Go To)
+▾ VOUCHERS     Contra … Purchase Return             (F4 to F9, Ctrl+F8, Ctrl+F9)
+▸ REPORTS      Trial Balance · Balance Sheet · Profit & Loss · Cash Flow · Ledger Report · Audit log
+```
+
+- Section headings fold: click one, or on the keyboard **→** opens it, **←** folds it (on an item, **←** goes up to its heading), Enter or Space toggles. Masters and Reports start folded; what a user folds is remembered for them (`S.fold`, saved with the screen state), and a screen's own section is opened when the screen opens. On a phone the menu is one row and shows everything.
+- Company and Prototype screens (Business Setup, User Management, My Account, Options) are in the **user menu**: click your name in the top bar, or press **Alt+M** (↑ ↓ Enter, Esc). Change business and Log out are there too. Go To finds them as well.
+- To add a screen to the menu: put it in `MENU` in `ui/nav.js` under a `{sec:'...'}` heading; `goto:true` keeps it out of the side menu but in Go To.
 The business name in the top bar (or Alt+B) changes business; your name opens My Account; Alt+Q logs out.
 
 ```
@@ -172,7 +223,7 @@ Screens register what they own instead of the shell knowing about every screen:
 
 - `FIELD[data-f]` in `ui/fields.js`: key, Enter, input, amount and date handling of a field
 - `PICK[data-f]` in `ui/picker.js`: the type-to-search lists
-- `PANELS[kind]` in `ui/popups.js`: detail popups (bill details, cheque details, new ledger, change period, Go To, invite user, change password)
+- `PANELS[kind]` in `ui/popups.js`: detail popups (bill details and new ledger are shared in `ui/bill-popup.js` and `ui/quick-ledger.js`; cheque details, new item, change period, Go To, invite user, change password)
 - `form({...})` in `ui/form.js`: a whole Tally-style form from a list of fields (text, password, pick list, Y/N, colour, picture, read-only); the sign-in, business and user screens use it
 
 Page scripts must not read `CUR.biz` or `CUR.user` at load time (do it in `init()`): the shell decides only in `start()`
@@ -190,7 +241,7 @@ whether the page may open at all.
 |---|---|
 | `bcg.db` | the platform tables (`core/db.js`): users, businesses, members (role, Owner flag, employee link, status), invites, sessions, sign-in log |
 | `bcg.session` | the sign-in on this browser (ends after 7 days unused, on log out, or on "log out all devices") |
-| `bcg.biz.<business>` | one business's data, shared by its users: custom groups and renames, ledgers, vouchers, audit log, options, employees, attendance, leave, salary |
+| `bcg.biz.<business>` | one business's data, shared by its users: custom groups and renames, ledgers, items, vouchers (item invoices carry `inv`), audit log, options, employees, attendance, leave, salary |
 | `bcg.ui.<business>.<user>` | where one user left the screens in that business: drafts, Day Book position, dashboard period, menu part |
 | `bcg.flash` | a message for the next page (for example "Password changed") |
 
@@ -200,7 +251,7 @@ Businesses never see each other's data. Passwords are hashed, but nothing here i
 ## Keyboard
 
 The same rules as before: Enter next field, Backspace previous field, Esc back (and then the menu), Ctrl+A accept,
-Alt+G Go To, Alt+B change business, Alt+Q log out, F4 to F7 vouchers, F2 date or period,
+Alt+G Go To, Alt+B change business, Alt+Q log out, F4 to F9 and Ctrl+F8 / Ctrl+F9 vouchers, F2 date or period,
 Ctrl+H Account layout, Alt+C in an Amount field opens the calculator (type a sum, Enter fills the field; elsewhere on a voucher Alt+C creates a ledger).
 Every voucher has Debit and Credit columns (a line's amount sits in the column of its Dr/Cr), a Bill No., and Cur Bal under each ledger; bill details start as On Account. In forms, Y / N (or Space) answer Yes/No fields and a picture field opens the file chooser with Space.
 Browser shortcuts are blocked. Warnings and questions are popups, successes are a toast at the top right, hints stay in the bar at the bottom.

@@ -26,8 +26,8 @@ function pickDraw(){const p=$('#pick'),t=PK.input;if(!t){p.hidden=true;return}
 function pickKey(e){const t=PK.input,k=e.key;
   if(k==='ArrowDown'||k==='ArrowUp'){stop(e);PK.moved=true;if(PK.items.length){PK.idx=(PK.idx+(k==='ArrowDown'?1:-1)+PK.items.length)%PK.items.length;pickDraw()}return true}
   if(k==='Escape'){if(t.value===curVal(t)){pickClose();return false}stop(e);t.value=curVal(t);pickShow(t);return true}
-  // Enter on an untouched, empty extra line (3rd line onward) means "no more lines"; everywhere else it picks the highlighted item
-  if(k==='Enter'){if(t.dataset.k==='lid'&&t.value.trim()===''&&+t.dataset.i>=2&&!PK.moved)return false;stop(e);
+  // Enter on an untouched, empty extra line (3rd line onward, or a field marked data-blank) means "no more lines"; everywhere else it picks the highlighted item
+  if(k==='Enter'){if(((t.dataset.k==='lid'&&+t.dataset.i>=2)||t.dataset.blank!==undefined)&&t.value.trim()===''&&!PK.moved)return false;stop(e);
     if(PK.items.length)pickCommit(PK.items[PK.idx]);else say(`Nothing matches "${t.value}".`,'bad');return true}
   return false}
 function pickCommit(it){const t=PK.input;if(!t)return;pickClose();t.value=it.label;say('');const h=PICK[t.dataset.f];if(h)h.commit(t,it)}

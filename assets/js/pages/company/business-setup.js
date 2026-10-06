@@ -6,7 +6,7 @@ const canEdit=()=>can('setup.edit');
 const notEdit=()=>!canEdit();
 const SV=()=>({name:BZ.name,type:BZ.type||'',address:BZ.address,phone:BZ.phone,email:BZ.email||'',logo:BZ.logo||'',printLogo:BZ.printLogo!==false,c1:BZ.c1||'',c2:BZ.c2||'',
   pan:BZ.pan||'',vat:!!BZ.vat,vatRate:BZ.vatRate||'13',fy:'1 Shrawan to end of Ashadh · FY 2083/84',books:BZ.books,lock:BZ.lockTo==null?'':isoText(BZ.lockTo),
-  contra:BZ.prefix.contra,payment:BZ.prefix.payment,receipt:BZ.prefix.receipt,journal:BZ.prefix.journal});
+  ...Object.fromEntries(Object.keys(TYPES).map(k=>[k,BZ.prefix[k]||TYPES[k].prefix]))});
 function lockProblem(v){v=String(v||'').trim();if(!v)return'';const r=parseDate(v,{m:0,d:1});if(!r)return DATE_HELP+' Leave it empty to unlock.';
   if(serial(r.m,r.d)>TODAY)return'Books can be locked up to today at the latest.';return''}
 const pfxProblem=v=>/^[A-Z0-9]{1,6}$/.test(String(v||'').trim().toUpperCase())?'':'A prefix is 1 to 6 letters or digits, for example PMT.';
@@ -22,11 +22,13 @@ const ST=form({id:'st',v:{},accept:()=>saveSetup(),fields:[
   {k:'books',l:'Books beginning from (BS)',ph:'yyyy-mm-dd',ro:notEdit,check:booksProblem},
   {k:'lock',l:'Lock books up to',ph:'Not locked',ro:()=>!can('owner'),check:lockProblem,hint:'Owner only. Vouchers up to this day cannot be made, altered or cancelled. Empty = not locked.'},
   {sec:'Voucher numbering',k:'contra',l:'Contra prefix',ro:notEdit,check:pfxProblem},{k:'payment',l:'Payment prefix',ro:notEdit,check:pfxProblem},
-  {k:'receipt',l:'Receipt prefix',ro:notEdit,check:pfxProblem},{k:'journal',l:'Journal prefix',ro:notEdit,check:pfxProblem}]});
+  {k:'receipt',l:'Receipt prefix',ro:notEdit,check:pfxProblem},{k:'journal',l:'Journal prefix',ro:notEdit,check:pfxProblem},
+  {k:'sales',l:'Sales prefix',ro:notEdit,check:pfxProblem},{k:'purchase',l:'Purchase prefix',ro:notEdit,check:pfxProblem},
+  {k:'salesret',l:'Sales Return (Credit Note) prefix',ro:notEdit,check:pfxProblem},{k:'purchret',l:'Purchase Return (Debit Note) prefix',ro:notEdit,check:pfxProblem}]});
 // How much of the optional information is filled in (B7: nothing is locked, the % only shows what is missing)
 const setupPct=()=>Math.round((5-setupMissing(BZ).length)/5*100)
 const LABEL={name:'name',type:'type',address:'address',phone:'phone',email:'email',logo:'logo',printLogo:'logo on prints',c1:'brand colour 1',c2:'brand colour 2',
-  pan:'PAN',vat:'VAT registered',vatRate:'VAT rate',books:'books beginning',contra:'Contra prefix',payment:'Payment prefix',receipt:'Receipt prefix',journal:'Journal prefix'};
+  pan:'PAN',vat:'VAT registered',vatRate:'VAT rate',books:'books beginning',contra:'Contra prefix',payment:'Payment prefix',receipt:'Receipt prefix',journal:'Journal prefix',sales:'Sales prefix',purchase:'Purchase prefix',salesret:'Sales Return prefix',purchret:'Purchase Return prefix'};
 function saveSetup(){if(!canEdit()){say('Only an Admin can change the business setup.','bad');return}
   const v=ST.v,t=k=>String(v[k]||'').trim();
   if(!t('name'))return fmBad(ST,'name','Type the business name.');
@@ -41,7 +43,7 @@ function saveSetup(){if(!canEdit()){say('Only an Admin can change the business s
   if(early)return fmBad(ST,'books',`${early} voucher${early>1?'s are':' is'} dated before ${bsText(bk)}. Pick an earlier day, or cancel those vouchers first.`);
   if(can('owner')){m=lockProblem(v.lock);if(m)return fmBad(ST,'lock',m)}
   const pf={};for(const k of Object.keys(TYPES)){m=pfxProblem(v[k]);if(m)return fmBad(ST,k,m);pf[k]=t(k).toUpperCase()}
-  if(new Set(Object.values(pf)).size<4)return fmBad(ST,'journal','Each voucher type needs its own prefix.');
+  if(new Set(Object.values(pf)).size<Object.keys(TYPES).length)return fmBad(ST,'journal','Each voucher type needs its own prefix.');
   const old=SV(),neu={...v,name:t('name'),c1:t('c1'),c2:t('c2'),address:t('address'),phone:t('phone'),email:normEmail(v.email),pan:t('pan'),vatRate:t('vatRate')||'13',books:t('books'),...pf};
   const changed=Object.keys(LABEL).filter(k=>String(old[k])!==String(neu[k])).map(k=>LABEL[k]);
   Object.assign(BZ,{name:neu.name,type:neu.type,address:neu.address,phone:neu.phone,email:neu.email,logo:neu.logo,printLogo:!!neu.printLogo,c1:t('c1'),c2:t('c2'),

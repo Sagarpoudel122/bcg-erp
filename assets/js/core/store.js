@@ -4,7 +4,7 @@
 const S={
  view:'payment',lastType:'payment',vid:0,groups:[],gren:{},
  q:{q1:true,q3:true,q4:true,q5:true,q6:'A',q7:true,q8:true,r2:true},
- counters:{contra:0,payment:0,receipt:0,journal:0},
+ counters:{contra:0,payment:0,receipt:0,journal:0,sales:0,purchase:0,salesret:0,purchret:0},items:[],
  vouchers:[],audit:[],drafts:{},flash:null,confirmCancel:null,delMsg:null,lfMsg:null,focus:null,
  ledgers:[
   L('cash','Cash','Cash-in-Hand',{def:true}),
@@ -26,7 +26,7 @@ S.lf=blankLF();
    bcg.biz.<business>          the business's data, shared by everyone in it (Store.keys)
    bcg.ui.<business>.<user>    where this user left the screens: drafts, Day Book position, menu part (Store.ui) */
 const Store={
-  keys:['ledgers','vouchers','audit','counters','vid','q','groups','gren'],
+  keys:['ledgers','vouchers','audit','counters','vid','q','groups','gren','items'],
   ui:['lastVid','drafts','lf','db','rep','rstack','dash'],
   ready:false,   // nothing is saved until the page has loaded its business: a page that redirects at start must not overwrite the data
   dataKey:()=>CUR.biz?'bcg.biz.'+CUR.biz.id:null,
@@ -38,6 +38,8 @@ const Store={
     this.ready=true;if(!b)return false;
     for(const x of this.keys)if(x in b)S[x]=b[x];
     if(S.q.r2===undefined)S.q.r2=true;   // saved before the R2 switch existed
+    for(const t in TYPES)if(S.counters[t]===undefined)S.counters[t]=0;   // saved before the invoice vouchers existed
+    if(!S.items)S.items=[];
     return true},
   save(){if(!this.ready)return;const b={},u={};for(const k of this.keys)b[k]=S[k];for(const k of this.ui)u[k]=S[k];
     if(u.db)u.db={sel:u.db.sel,date:u.db.date,all:u.db.all};LS.set(this.dataKey(),b);LS.set(this.uiKey(),u)}
@@ -46,5 +48,5 @@ window.addEventListener('pagehide',()=>Store.save());
 
 // Every business starts with the default ledgers only (Cash, Profit & Loss, VAT, TDS Payable, Sales, Purchase): no vouchers, no employees
 function freshBusiness(){
-  Object.assign(S,{vouchers:[],audit:[],counters:{contra:0,payment:0,receipt:0,journal:0},vid:0,drafts:{},groups:[],gren:{},emps:[],leaves:[],att:{},pay:{}});
+  Object.assign(S,{vouchers:[],audit:[],counters:{contra:0,payment:0,receipt:0,journal:0,sales:0,purchase:0,salesret:0,purchret:0},items:[],vid:0,drafts:{},groups:[],gren:{},emps:[],leaves:[],att:{},pay:{}});
   const v=led('vat');if(v)v.extra.rate=CUR.biz.vatRate||'13'}

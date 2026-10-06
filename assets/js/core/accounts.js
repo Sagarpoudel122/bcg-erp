@@ -8,7 +8,7 @@ const blankLine=side=>({side,lid:'',amt:'',alloc:[],inst:{open:false,type:'Chequ
 // Every voucher starts as plain Dr/Cr lines (mode 'double'). For Contra, Payment and Receipt, Ctrl+H switches to the Tally
 // "Account on top" layout (mode 'single'): the cash/bank Account first, then the particulars. Journal is always Dr/Cr.
 const ACC={contra:'Cr',payment:'Cr',receipt:'Dr'};
-const blank=(type,mode)=>{mode=mode||'double';const a=ACC[type];
+const blank=(type,mode)=>{if(TYPES[type].inv)return blankInv(type);mode=mode||'double';const a=ACC[type];
   return{type,mode,date:{m:2,d:15},lines:mode==='single'?[blankLine(a),blankLine(a==='Dr'?'Cr':'Dr')]:[blankLine('Dr'),blankLine('Cr')],narr:'',billNo:'',editingId:null}};
 const draft=type=>S.drafts[type]||(S.drafts[type]=blank(type));
 /* ---------- Bills ---------- */
@@ -33,12 +33,15 @@ function initAlloc(d,ln){
 }
 /* ---------- Checks ---------- */
 function totals(d){let dr=0,cr=0;for(const l of d.lines){const c=cents(l.amt);if(l.side==='Dr')dr+=c;else cr+=c}return{dr,cr}}
+// Is the voucher's date inside the open period? (shared by every voucher type)
+function dateCheck(d){const s=serial(d.date.m,d.date.d);
+  if(s<=LOCK)return{t:'Date',st:'bad',m:`Books are locked up to ${bsText(LOCK)}. Pick ${isoText(LOCK+1)} or later, or ask the Owner to unlock.`};
+  if(s<BOOKS)return{t:'Date',st:'bad',m:`The books of this business begin on ${bsText(BOOKS)}. Pick that day or later.`};
+  if(s>TODAY)return{t:'Date',st:'warn',m:'Future date. Allowed with this warning, for example for a post-dated cheque.'};
+  return{t:'Date',st:'ok',m:`${bsText(s)} is in an open period.`}}
 function checks(d){
-  const out=[];const T=TYPES[d.type];const s=serial(d.date.m,d.date.d);
-  if(s<=LOCK)out.push({t:'Date',st:'bad',m:`Books are locked up to ${bsText(LOCK)}. Pick ${isoText(LOCK+1)} or later, or ask the Owner to unlock.`});
-  else if(s<BOOKS)out.push({t:'Date',st:'bad',m:`The books of this business begin on ${bsText(BOOKS)}. Pick that day or later.`});
-  else if(s>TODAY)out.push({t:'Date',st:'warn',m:'Future date. Allowed with this warning, for example for a post-dated cheque.'});
-  else out.push({t:'Date',st:'ok',m:`${bsText(s)} is in an open period.`});
+  const out=[];const T=TYPES[d.type];
+  out.push(dateCheck(d));
   const filled=d.lines.filter(l=>l.lid||cents(l.amt));
   const inc=d.lines.findIndex(l=>(l.lid||cents(l.amt))&&(!l.lid||cents(l.amt)<=0));
   if(inc>=0)out.push({t:'Lines',st:'bad',m:`Line ${inc+1} needs both a ledger and an amount.`});

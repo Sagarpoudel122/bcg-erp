@@ -84,7 +84,7 @@ const DB={
   /* businesses */
   createBusiness(uid,f){const id=this.nid('b');
     const b={id,name:f.name.trim(),type:f.type||'',address:f.address.trim(),phone:f.phone.trim(),email:normEmail(f.email),pan:f.pan||'',vat:!!f.vat,vatRate:'13',
-      books:f.books,logo:'',printLogo:true,c1:'',c2:'',prefix:{contra:'CTR',payment:'PMT',receipt:'RCT',journal:'JRN'},lockTo:null,created:now(),deleted:0};
+      books:f.books,logo:'',printLogo:true,c1:'',c2:'',prefix:{contra:'CTR',payment:'PMT',receipt:'RCT',journal:'JRN',sales:'SLS',purchase:'PUR',salesret:'CRN',purchret:'DRN'},lockTo:null,created:now(),deleted:0};
     this.d.businesses.push(b);this.d.members.push({id:this.nid('m'),biz:id,user:uid,role:'admin',owner:true,emp:'',status:'Active',since:now()});this.save();return b},
 
   /* invitations: valid 7 days; the invited address sees them on Select Business after signing in */

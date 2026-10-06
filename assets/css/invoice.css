@@ -1,0 +1,38 @@
+/* Sales, Purchase and their returns: party header, item rows, totals. Same tokens and rhythm as voucher.css */
+.ihead{margin-bottom:12px}
+.ihead .f{grid-template-columns:130px minmax(0,420px)}
+.ihead .f label::after{content:' :'}
+.ihead .sub{grid-column:2;font-size:12.5px;font-style:italic;color:var(--muted);padding:0 8px 2px}
+.ih,.irow{display:grid;grid-template-columns:32px minmax(0,1fr) 96px 112px 64px 60px 130px;gap:0 12px;align-items:start}
+.ih{font-size:13px;color:var(--muted);padding:0 0 4px;border-bottom:1px solid var(--line-strong);margin-bottom:8px}
+.ih .r{text-align:right;padding-right:8px}
+.irows{display:flex;flex-direction:column;gap:2px;min-height:120px}
+.irow .sn{font-family:var(--f-num);color:var(--muted);font-size:13px;padding-top:7px}
+.irow .in{height:31px;padding-top:0;padding-bottom:0}
+.irow .in.amt,.irow .in.qty{text-align:right}
+.irow .ramt{text-align:right;font-family:var(--f-num);padding:6px 8px 0 0}
+.irow .sub{grid-column:2 / -1;font-size:12.5px;font-style:italic;color:var(--muted);padding:0 8px 4px}
+.irow .sub .warn{color:var(--warn);font-style:normal}
+.itot{margin-top:8px;border-top:1px solid var(--ink);border-bottom:3px double var(--ink);padding:6px 0;font-size:14px}
+.itot .tr{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:0 12px;padding:1px 0}
+.itot .tr span:first-child{text-align:right;color:var(--muted)}
+.itot .tr b{text-align:right;padding-right:8px;font-family:var(--f-num);font-weight:500}
+.itot .tr.grand{font-size:15px;margin-top:3px;padding-top:4px;border-top:1px solid var(--line)}
+.itot .tr.grand span:first-child{color:var(--ink);font-weight:600}
+.itot .tr.grand b{font-weight:600;color:var(--dr)}
+.itot .words{font-size:12.5px;font-style:italic;color:var(--muted);padding:4px 8px 0}
+.itot .okc{color:var(--ok)}.itot .badc{color:var(--bad)}
+.irow .in[data-k="disc"]::placeholder,.irow .in[data-k="vat"]::placeholder,.irow .in[data-k="rate"]::placeholder{opacity:0}
+@media (max-width:820px){
+  /* phone: each row is the item name on its own line, then Qty | Rate | Disc % | VAT % | Amount under it */
+  .ih{display:none}
+  .irows{gap:8px}
+  .irow{grid-template-columns:minmax(0,.8fr) minmax(0,1.35fr) minmax(0,.9fr) minmax(0,.75fr) minmax(0,1.4fr);gap:2px 6px}
+  .irow .sn{display:none}
+  .irow>.in[data-k="iid"],.irow .sub{grid-column:1 / -1}
+  .irow .in[data-k="disc"]::placeholder,.irow .in[data-k="vat"]::placeholder,.irow .in[data-k="rate"]::placeholder{opacity:.65}
+  .irow .in,.irow .ramt{font-size:13px;padding-left:3px;padding-right:3px}
+  .irow .ramt{padding-top:6px}
+  .ihead .f{grid-template-columns:minmax(0,1fr)}.ihead .sub{grid-column:1}
+  .itot .tr{grid-template-columns:minmax(0,1fr) 110px}
+}

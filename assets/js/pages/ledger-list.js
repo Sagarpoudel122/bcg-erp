@@ -20,5 +20,5 @@ function delLedger(){const l=S.ll.list[S.ll.sel];if(!l)return;
 function reactLedger(){const l=S.ll.list[S.ll.sel];if(!l)return;if(l.active){say(`${l.name} is already active.`,'');return}l.active=true;render();say(`${l.name} is active again.`,'ok')}
 start({
   id:'ledgers',title:'List of Ledgers',view:vLedgers,state:S.ll,
-  keys:()=>[{k:'↑ ↓',l:'Move'},...(can('ledger.delete')?[{k:'Delete',kd:'Del',l:'Delete',a:delLedger},{k:'R',l:'Reactivate',a:reactLedger}]:[]),{gap:1},escKey()],
+  keys:()=>[{k:'↑ ↓',l:'Move'},...(can('ledger.create')?[{k:'N',l:'Create ledger',a:()=>go('ledger')}]:[]),...(can('ledger.delete')?[{k:'Delete',kd:'Del',l:'Delete',a:delLedger},{k:'R',l:'Reactivate',a:reactLedger}]:[]),{gap:1},escKey()],
   key:e=>listNav(e,S.ll,S.ll.list.length,render)});
